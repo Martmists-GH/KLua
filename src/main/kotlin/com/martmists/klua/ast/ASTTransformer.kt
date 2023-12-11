@@ -1,327 +1,389 @@
 package com.martmists.klua.ast
 
 import com.martmists.klua.ast.node.*
-import com.martmists.klua.ast.node.Target
-import com.martmists.klua.parsing.LuaLexer
-import com.martmists.klua.parsing.LuaParser
-import com.martmists.klua.parsing.LuaParserBaseListener
-import org.antlr.v4.runtime.*
-import org.antlr.v4.runtime.atn.ATNConfigSet
-import org.antlr.v4.runtime.dfa.DFA
-import org.antlr.v4.runtime.tree.ErrorNode
-import org.antlr.v4.runtime.tree.TerminalNode
-import java.util.*
+import com.martmists.klua.ext.fromLuaChar
+import com.martmists.klua.ext.fromLuaLong
+import com.martmists.klua.ext.fromLuaNormal
+import com.martmists.klua.parsing.LuaParser.*
+import org.antlr.v4.runtime.ParserRuleContext
 
-@Suppress("ReplaceUntilWithRangeUntil")
-class ASTTransformer(private val debug: Boolean,
-                     private val symbols: Array<String>,
-                     private val rules: Array<String>) : LuaParserBaseListener(), ANTLRErrorListener {
-    private val stack = mutableListOf<MutableList<ASTNode>>()
-    private var current = mutableListOf<ASTNode>()
-    private var functionBeingBuilt = Target(null, PushNil)
-    private var functionBeingBuiltIsMethod = false
-    private var attr = false
-
-    init {
-        pushBlock()
+object ASTTransformer {
+    @Suppress("unused")
+    private fun transform(node: ParserRuleContext): ASTNode {
+        TODO(node::class.simpleName ?: "Unknown")
     }
 
-    fun pushBlock() {
-        if (debug) {
-            println("Push block from ${StackWalker.getInstance().walk { it.skip(1).limit(1).findFirst().get().methodName }}")
-        }
-        stack.add(current)
-        current = mutableListOf()
+    fun transform(node: Start_Context): ASTNode {
+        return transform(node.chunk()!!)
     }
 
-    fun popBlock(): Block {
-        if (debug) {
-            println("Pop block from ${StackWalker.getInstance().walk { it.skip(1).limit(1).findFirst().get().methodName }}")
-        }
-        val block = current
-        current = stack.removeLast()
-        require(block.all { it is Statement })
-        return Block(block)
+    private fun transform(node: ChunkContext): ASTNode {
+        return transform(node.block()!!)
     }
 
-    fun pushNode(node: ASTNode) {
-        if (debug) {
-            println("Push: $node from ${StackWalker.getInstance().walk { it.skip(1).limit(1).findFirst().get().methodName }}")
-        }
-        current.add(node)
+    private fun transform(node: BlockContext): ASTNode {
+        val statements = node.stat().map { transform(it) }.toMutableList()
+        node.retstat()?.let { statements += transform(it) }
+        return Block(statements)
     }
 
-    fun popNode(): ASTNode {
-        if (debug) {
-            println("Pop: ${current.last()} from ${StackWalker.getInstance().walk { it.skip(1).limit(1).findFirst().get().methodName }}")
-        }
-        if (current.last() is Statement) {
-            throw RuntimeException("Cannot pop statement")
-        }
-        return current.removeLast()
-    }
-
-    override fun exitEveryRule(ctx: ParserRuleContext) {
-        if (debug) {
-            println("${rules[ctx.ruleIndex]} -> ${ctx.text} | ${ctx.children?.joinToString { it.text }}")
-        }
-    }
-
-    override fun exitNumber(ctx: LuaParser.NumberContext) {
-        if (ctx.INT() != null) {
-            pushNode(PushInt(ctx.INT()!!.text))
-        } else if (ctx.FLOAT() != null) {
-            pushNode(PushFloat(ctx.FLOAT()!!.text))
-        }
-    }
-
-    override fun visitTerminal(node: TerminalNode) {
-        if (debug) {
-            println("${symbols[node.symbol.type]} -> ${node.text}")
-        }
-        when (node.symbol.type) {
-            LuaLexer.NAME -> {
-                pushNode(LoadName(node.text))
-            }
-            LuaLexer.TRUE -> {
-                pushNode(PushBool(true))
-            }
-            LuaLexer.FUNCTION -> {
-                pushBlock()
-            }
-            LuaLexer.FALSE -> {
-                pushNode(PushBool(false))
-            }
-            LuaLexer.NIL -> {
-                pushNode(PushNil)
-            }
-            LuaLexer.DOT, LuaLexer.COL -> {
-                attr = true
-            }
-            LuaLexer.DDD -> {
-                pushNode(PushVarArgs)
-            }
-        }
-    }
-
-    override fun exitAttrib(ctx: LuaParser.AttribContext) {
-        // TODO: Discarded for now
-        if (ctx.text != "") {
-            popNode()
-        }
-    }
-
-    override fun exitString(ctx: LuaParser.StringContext) {
-        // Unescape string
-        val quote = ctx.text[0]
-        val text = ctx.text.substring(1, ctx.text.length - 1)
-            .replace("\\\\", "\\")
-            .replace("\\$quote", "$quote")
-            .replace("\\n", "\n")
-            .replace("\\r", "\r")
-            .replace("\\t", "\t")
-            .replace("\\b", "\b")
-            .replace("\\f", "\u000c")
-            .replace("\\v", "\u000b")
-            .replace("\\a", "\u0007")
-            .replace("\\e", "\u001b")
-            .replace("\\0", "\u0000")
-        pushNode(PushString(text))
-    }
-
-    override fun exitExp(ctx: LuaParser.ExpContext) {
-        when (ctx.children.size) {
-            2 -> {
-                val item = popNode()
-                val op = ctx.children[0].text
-                when (op) {
-                    "#" -> pushNode(UnOpLen(item))
-                    "not" -> pushNode(UnOpNot(item))
-                    else -> throw RuntimeException("Unknown unary operator: $op")
+    private fun transform(node: StatContext): ASTNode {
+        val stmt = when {
+            node.SEMI() != null -> NoOp
+            node.varlist() != null -> Assign(
+                transform(node.varlist()!!),
+                transform(node.explist()!!),
+                local=false,
+            )
+            node.functioncall() != null -> transform(node.functioncall()!!)
+            node.label() != null -> transform(node.label()!!)
+            node.BREAK() != null -> Break
+            node.GOTO() != null -> Goto(node.NAME()!!.text)
+            node.DO() != null -> {
+                when {
+                    node.WHILE() != null -> {
+                        WhileLoop(transform(node.exp(0)!!), transform(node.block(0)!!))
+                    }
+                    node.EQ() != null -> {
+                        NumericForLoop(
+                            node.NAME()!!.text,
+                            transform(node.exp(0)!!),
+                            transform(node.exp(1)!!),
+                            if (node.exp().size == 3) {
+                                transform(node.exp(2)!!)
+                            } else {
+                                PushLong(1)
+                            },
+                            transform(node.block(0)!!)
+                        )
+                    }
+                    node.IN() != null -> {
+                        GenericForLoop(
+                            transform(node.namelist()!!),
+                            transform(node.explist()!!),
+                            transform(node.block(0)!!),
+                        )
+                    }
+                    else -> {
+                        transform(node.block(0)!!)
+                    }
                 }
             }
-            3 -> {
-                val rhs = popNode()
-                val lhs = popNode()
-                val op = ctx.children[1].text
-                val node = when (op) {
-                    "+" -> BinOpAdd(lhs, rhs)
-                    "-" -> BinOpSub(lhs, rhs)
-                    "*" -> BinOpMul(lhs, rhs)
-                    "/" -> BinOpDiv(lhs, rhs)
-                    "^" -> BinOpPow(lhs, rhs)
-                    "%" -> BinOpMod(lhs, rhs)
-                    "==", "~=" -> BinOpEq(lhs, rhs, op == "~=")
-                    "and" -> BinOpAnd(lhs, rhs)
-                    ".." -> BinOpConcat(lhs, rhs)
-                    "or" -> BinOpOr(lhs, rhs)
-                    "|" -> BinOpBitOr(lhs, rhs)
-                    "&" -> BinOpBitAnd(lhs, rhs)
-                    else -> throw RuntimeException("Unknown operator: $op")
-                }
-                pushNode(node)
+            node.REPEAT() != null -> {
+                RepeatUntilLoop(
+                    transform(node.block(0)!!),
+                    transform(node.exp(0)!!)
+                )
             }
-        }
-    }
-
-    override fun exitPrefixexp(ctx: LuaParser.PrefixexpContext) {
-        when (ctx.children.size) {
-            3 -> {
-                if (ctx.OP() == null) {
-                    val rhs = popNode()
-                    val lhs = popNode()
-                    pushNode(LoadAttribute(lhs, PushString((rhs as LoadName).name)))
-                }
-            }
-            4 -> {
-                val rhs = popNode()
-                val lhs = popNode()
-                pushNode(LoadAttribute(lhs, rhs))
-            }
-        }
-    }
-
-    override fun exitVar(ctx: LuaParser.VarContext) {
-        if (ctx.children.size == 1) {
-            // Do nothing
-        } else {
-            val rhs = popNode()
-            val lhs = popNode()
-            if (ctx.children[1].text == ".") {
-                pushNode(LoadAttribute(lhs, PushString((rhs as LoadName).name)))
-            } else {
-                pushNode(LoadAttribute(lhs, rhs))
-            }
-        }
-    }
-
-    override fun exitFunctioncall(ctx: LuaParser.FunctioncallContext) {
-        val args = ctx.args()!!
-
-        if (args.childCount > 1 && ctx.text.endsWith(")")) {
-            var numArgs = ctx.args()!!.children[1].childCount
-            if (numArgs > 1) {
-                // Commas are included in the child count
-                numArgs = (numArgs + 1) / 2
-            }
-            var fnArgs = (0 until numArgs).map { popNode() }.asReversed()
-            val owner = popNode()
-            if (owner is LoadAttribute && ctx.children[ctx.childCount - 3].text == ":") {
-                fnArgs = listOf(owner.owner) + fnArgs
-            }
-            pushNode(FunctionCall(owner, fnArgs))
-        } else {
-            val arg = popNode()
-            val owner = popNode()
-            if (owner is LoadAttribute && ctx.children[ctx.childCount - 3].text == ":") {
-                pushNode(FunctionCall(owner.owner, listOf(arg)))
-            } else {
-                pushNode(FunctionCall(owner, listOf(arg)))
-            }
-        }
-    }
-
-    override fun exitFuncname(ctx: LuaParser.FuncnameContext) {
-        if (ctx.children.size == 3) {
-            val node = popNode() as LoadAttribute
-            functionBeingBuilt = Target(node.owner, node.name)
-            functionBeingBuiltIsMethod = ctx.children[ctx.children.size - 2].text == ":"
-        } else {
-            if (ctx.NAME() != null) {
-                popNode()
-            }
-            functionBeingBuilt = Target(null, PushString(ctx.children[0].text))
-            functionBeingBuiltIsMethod = false
-        }
-    }
-
-    override fun exitFuncbody(ctx: LuaParser.FuncbodyContext) {
-        val args = ctx.parlist()?.namelist()?.NAME()?.map { it.text } ?: emptyList()
-        current = current.drop(args.size).toMutableList()
-        if (current.firstOrNull() is PushVarArgs) {
-            current.removeFirst()
-        }
-        val block = popBlock()
-        // TODO: Check for local
-        pushNode(FunctionDefinition(functionBeingBuilt, args, block, functionBeingBuiltIsMethod, false))
-    }
-
-    override fun exitTableconstructor(ctx: LuaParser.TableconstructorContext) {
-        val numValues = ctx.fieldlist()?.field()?.size ?: 0
-        val directValues = ctx.fieldlist()?.field()?.filter { it.EQ() == null }?.size ?: 0
-
-        var j = directValues
-        val values = mutableListOf<Pair<ASTNode, ASTNode>>()
-        for (i in numValues downTo 1) {
-            val c = ctx.fieldlist()!!.field(i-1)!!
-            val value = popNode()
-            if (c.EQ() != null) {
-                // Assign
-            } else {
-                // Index
-                pushNode(PushInt((j--).toString()))
-            }
-            val key = popNode()
-            values.add(key to value)
-        }
-        pushNode(TableConstructor(values.asReversed()))
-    }
-
-    override fun exitStat(ctx: LuaParser.StatContext) {
-        if (ctx.children.size >= 3 && ctx.children[ctx.childCount-2].text == "=") {
-            val numValues = ctx.children[ctx.childCount-1].childCount / 2 + 1
-            val numTargets = ctx.attnamelist()?.NAME()?.size ?: ctx.varlist()!!.`var`().size
-            val values = (0 until numValues).map { popNode() }.asReversed()
-            val targets = (0 until numTargets).map { popNode() }.asReversed()
-            pushNode(Assign(targets.map {
-                if (it is LoadAttribute) {
-                    Target(it.owner, it.name)
+            node.IF() != null -> {
+                val conditions = node.exp().map { transform(it) }.toMutableList()
+                val blocks = node.block().map { transform(it) }.toMutableList()
+                var last = if (node.ELSE() != null) {
+                    val elseBlock = blocks.removeLast()
+                    IfElseBlock(conditions.removeLast(), blocks.removeLast(), elseBlock)
                 } else {
-                    Target(null, PushString((it as LoadName).name))
+                    IfElseBlock(conditions.removeLast(), blocks.removeLast(), NoOp)
                 }
-            }, values, ctx.children.size == 4 && ctx.children[0].text == "local"))
+                while (conditions.isNotEmpty()) {
+                    last = IfElseBlock(conditions.removeLast(), blocks.removeLast(), last)
+                }
+                last
+            }
+            node.FUNCTION() != null -> {
+                if (node.LOCAL() != null) {
+                    Assign(
+                        listOf(LoadName(node.NAME()!!.text)),
+                        listOf(transform(node.funcbody()!!)),
+                        local=true,
+                    )
+                } else {
+                    Assign(
+                        listOf(transform(node.funcname()!!)),
+                        listOf(transform(node.funcbody()!!)),
+                        local=false,
+                    )
+                }
+            }
+            node.attnamelist() != null -> {
+                val targets = transform(node.attnamelist()!!)
+                if (node.explist() != null) {
+                    Assign(
+                        targets,
+                        transform(node.explist()!!),
+                        local=true,
+                    )
+                } else {
+                    Assign(
+                        targets,
+                        List(targets.size) { PushNil },
+                        local=true,
+                    )
+                }
+            }
+            else -> throw IllegalStateException("Unknown stat: ${node.text}")
+        }
+        return Statement(stmt)
+    }
+
+    private fun transform(node: VarlistContext): List<ASTNode> {
+        return node.`var`().map { transform(it) }
+    }
+
+    private fun transform(node: VarContext): ASTNode {
+        return when {
+            node.prefixexp() != null -> {
+                val root = transform(node.prefixexp()!!)
+                if (node.exp() != null) {
+                    LoadAttribute(root, transform(node.exp()!!))
+                } else {
+                    LoadAttribute(root, PushString(node.NAME()!!.text))
+                }
+            }
+            node.NAME() != null -> LoadName(node.NAME()!!.text)
+            else -> throw IllegalStateException("Unknown var: ${node.text}")
+        }
+    }
+
+    private fun transform(node: ExplistContext): List<ASTNode> {
+        return node.exp().map { transform(it) }
+    }
+
+    private fun transform(node: ExpContext): ASTNode {
+        return when {
+            node.NIL() != null -> PushNil
+            node.FALSE() != null -> PushBoolean(false)
+            node.TRUE() != null -> PushBoolean(true)
+            node.number() != null -> transform(node.number()!!)
+            node.string() != null -> transform(node.string()!!)
+            node.DDD() != null -> PushVarargs
+            node.functiondef() != null -> transform(node.functiondef()!!)
+            node.prefixexp() != null -> transform(node.prefixexp()!!)
+            node.tableconstructor() != null -> transform(node.tableconstructor()!!)
+            node.exp().size == 1 -> {
+                // Unary Op
+                val item = transform(node.exp(0)!!)
+                when {
+                    node.NOT() != null -> UnaryNot(item)
+                    node.POUND() != null -> UnaryLen(item)
+                    node.MINUS() != null -> UnaryNeg(item)
+                    node.SQUIG() != null -> UnaryBitwiseNot(item)
+                    else -> throw IllegalStateException("Unknown unary op: ${node.text}")
+                }
+            }
+            node.exp().size == 2 -> {
+                // Binary Op
+                val left = transform(node.exp(0)!!)
+                val right = transform(node.exp(1)!!)
+                when {
+                    node.CARET() != null -> BinaryPow(left, right)
+                    node.STAR() != null -> BinaryMul(left, right)
+                    node.SLASH() != null -> BinaryDiv(left, right)
+                    node.PER() != null -> BinaryMod(left, right)
+                    node.SS() != null -> BinaryIDiv(left, right)
+                    node.PLUS() != null -> BinaryAdd(left, right)
+                    node.MINUS() != null -> BinarySub(left, right)
+                    node.DD() != null -> BinaryConcat(left, right)
+                    node.LT() != null -> BinaryLT(left, right)
+                    node.GT() != null -> BinaryGT(left, right)
+                    node.LE() != null -> BinaryLE(left, right)
+                    node.GE() != null -> BinaryGE(left, right)
+                    node.SQEQ() != null -> BinaryNE(left, right)
+                    node.EE() != null -> BinaryEQ(left, right)
+                    node.AND() != null -> BinaryAnd(left, right)
+                    node.OR() != null -> BinaryOr(left, right)
+                    node.AMP() != null -> BinaryBitwiseAnd(left, right)
+                    node.PIPE() != null -> BinaryBitwiseOr(left, right)
+                    node.SQUIG() != null -> BinaryBitwiseXor(left, right)
+                    node.LL() != null -> BinaryBitwiseShl(left, right)
+                    node.GG() != null -> BinaryBitwiseShr(left, right)
+                    else -> throw IllegalStateException("Unknown binary op: ${node.text}")
+                }
+            }
+            else -> throw IllegalStateException("Unknown exp: ${node.text}")
+        }
+    }
+
+    private fun transform(node: NumberContext): ASTNode {
+        return when {
+            node.INT() != null -> PushLong(node.INT()!!.text.toLong())
+            node.HEX() != null -> PushLong(node.HEX()!!.text.substring(2).toLong(16))
+            node.FLOAT() != null -> PushDouble(node.FLOAT()!!.text.toDouble())
+            node.HEX_FLOAT() != null -> PushDouble(node.HEX_FLOAT()!!.text.toDouble())
+            else -> throw IllegalStateException("Unknown number: ${node.text}")
+        }
+    }
+
+    private fun transform(node: StringContext): ASTNode {
+        return when {
+            node.NORMALSTRING() != null -> PushString(node.text.fromLuaNormal())
+            node.CHARSTRING() != null -> PushString(node.text.fromLuaChar())
+            node.LONGSTRING() != null -> PushString(node.text.fromLuaLong())
+            else -> throw IllegalStateException("Unknown string: ${node.text}")
+        }
+    }
+
+    private fun transform(node: FunctiondefContext): ASTNode {
+        return transform(node.funcbody()!!)
+    }
+
+    private fun transform(node: FuncbodyContext): ASTNode {
+        val params = transform(node.parlist()!!)
+        val body = transform(node.block()!!)
+        return UnnamedFunction(params, body)
+    }
+
+    private fun transform(node: ParlistContext): List<String> {
+        val names = node.namelist()?.let(::transform)?.toMutableList() ?: mutableListOf()
+        if (node.DDD() != null) {
+            names += "..."
+        }
+        return names
+    }
+
+    private fun transform(node: NamelistContext): List<String> {
+        return node.NAME().map { it.text }
+    }
+
+    private fun transform(node: PrefixexpContext): ASTNode {
+        var expIdx = 0
+        var nameIdx = 0
+        var start = 1
+        var owner = when {
+            node.functioncall() != null -> {
+                transform(node.functioncall()!!)
+            }
+            node.OP() != null -> {
+                start = 3
+                transform(node.exp(expIdx++)!!)
+            }
+            else -> LoadName(node.NAME(nameIdx++)!!.text)
         }
 
-        if (current.last() is Statement) {
-            return
+        while (start < node.childCount) {
+            when (node.getChild(start).text) {
+                "." -> {
+                    owner = LoadAttribute(owner, PushString(node.NAME(nameIdx++)!!.text))
+                    start += 2
+                }
+                "[" -> {
+                    owner = LoadAttribute(owner, transform(node.exp(expIdx++)!!))
+                    start += 3
+                }
+            }
         }
-        pushNode(Statement(popNode()))
+
+        return owner
     }
 
-    override fun exitRetstat(ctx: LuaParser.RetstatContext) {
-        var numArgs = ctx.children[1].childCount
-        if (numArgs > 1) {
-            // Commas are included in the child count
-            numArgs = (numArgs + 1) / 2
+    private fun transform(node: FunctioncallContext): ASTNode {
+        // Start as prefixexp
+        var expIdx = 0
+        var nameIdx = 0
+        var start = 1
+        var owner = when {
+            node.functioncall() != null -> {
+                transform(node.functioncall()!!)
+            }
+            node.OP() != null -> {
+                start = 3
+                transform(node.exp(expIdx++)!!)
+            }
+            else -> LoadName(node.NAME(nameIdx++)!!.text)
         }
-        val args = (0 until numArgs).map { popNode() }.asReversed()
-        pushNode(Statement(Return(args)))
+
+        while (start < node.childCount) {
+            when (node.getChild(start).text) {
+                "." -> {
+                    owner = LoadAttribute(owner, PushString(node.NAME(nameIdx++)!!.text))
+                    start += 2
+                }
+                "[" -> {
+                    owner = LoadAttribute(owner, transform(node.exp(expIdx++)!!))
+                    start += 3
+                }
+                ":" -> {
+                    return FunctionCall(
+                        LoadAttribute(owner, PushString(node.NAME(nameIdx)!!.text)),
+                        transform(node.args()!!),
+                        isMethod=true
+                    )
+                }
+                else -> {
+                    return FunctionCall(
+                        owner,
+                        transform(node.args()!!),
+                        isMethod=false
+                    )
+                }
+            }
+        }
+
+        throw IllegalStateException("Unknown functioncall: ${node.text}")
     }
 
-    override fun visitErrorNode(node: ErrorNode) {
-        println("Error: ${node.text}")
+    private fun transform(node: ArgsContext): List<ASTNode> {
+        return when {
+            node.explist() != null -> transform(node.explist()!!)
+            node.tableconstructor() != null -> listOf(transform(node.tableconstructor()!!))
+            node.string() != null -> listOf(transform(node.string()!!))
+            else -> emptyList()
+        }
     }
 
-    override fun syntaxError(
-        p0: Recognizer<*, *>?,
-        p1: Any?,
-        p2: Int,
-        p3: Int,
-        p4: String?,
-        p5: RecognitionException?
-    ) {
-        TODO("Not yet implemented")
+    private fun transform(node: TableconstructorContext): ASTNode {
+        val fields = node.fieldlist()?.let(::transform)?.toMutableList() ?: mutableListOf()
+        var j = 1L
+        for ((i, field) in fields.withIndex()) {
+            if (field is TableConstructor.IndexedTableField) {
+                fields[i] = TableConstructor.TableField(PushLong(j++), field.value)
+            }
+        }
+        @Suppress("UNCHECKED_CAST")
+        return TableConstructor((fields as List<TableConstructor.TableField>).associate { it.key to it.value })
     }
 
-    override fun reportAmbiguity(p0: Parser?, p1: DFA?, p2: Int, p3: Int, p4: Boolean, p5: BitSet?, p6: ATNConfigSet?) {
-        TODO("Not yet implemented")
+    private fun transform(node: FieldlistContext): List<TableConstructor.TableConstructorEntry> {
+        return node.field().map { transform(it) }
     }
 
-    override fun reportAttemptingFullContext(p0: Parser?, p1: DFA?, p2: Int, p3: Int, p4: BitSet?, p5: ATNConfigSet?) {
-        TODO("Not yet implemented")
+    private fun transform(node: FieldContext): TableConstructor.TableConstructorEntry {
+        return when {
+            node.OB() != null -> TableConstructor.TableField(
+                transform(node.exp(0)!!),
+                transform(node.exp(1)!!)
+            )
+            node.NAME() != null -> TableConstructor.TableField(
+                PushString(node.NAME()!!.text),
+                transform(node.exp(0)!!)
+            )
+            else -> TableConstructor.IndexedTableField(transform(node.exp(0)!!))
+        }
     }
 
-    override fun reportContextSensitivity(p0: Parser?, p1: DFA?, p2: Int, p3: Int, p4: Int, p5: ATNConfigSet?) {
-        TODO("Not yet implemented")
+    private fun transform(node: LabelContext): ASTNode {
+        return Label(node.NAME()!!.text)
+    }
+
+    private fun transform(node: FuncnameContext): ASTNode {
+        val names = node.NAME().map { it.text }.toMutableList()
+        var root: ASTNode = LoadName(names.removeFirst())
+        for (name in names) {
+            root = LoadAttribute(root, PushString(name))
+        }
+        return root
+    }
+
+    private fun transform(node: AttnamelistContext): List<ASTNode> {
+        // TODO: Pass attributes
+        return node.NAME().map { LoadName(it.text) }
+    }
+
+    private fun transform(node: RetstatContext): ASTNode {
+        return when {
+            node.RETURN() != null -> Return(node.explist()?.let(::transform) ?: emptyList())
+            node.BREAK() != null -> Break
+            node.CONTINUE() != null -> Continue
+            else -> throw IllegalStateException("Unknown retstat: ${node.text}")
+        }
     }
 }

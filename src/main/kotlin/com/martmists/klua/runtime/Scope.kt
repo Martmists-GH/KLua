@@ -2,279 +2,257 @@ package com.martmists.klua.runtime
 
 import com.martmists.klua.ast.node.*
 import com.martmists.klua.ext.asBool
-import com.martmists.klua.ext.collect
-import com.martmists.klua.ext.loop
-import com.martmists.klua.runtime.ops.*
+import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.collectAsLuaScope
+import com.martmists.klua.runtime.async.createLuaScope
+import com.martmists.klua.runtime.operator.*
 import com.martmists.klua.runtime.type.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.*
 
 class Scope(
     private val parent: Scope? = null,
-    private val stack: Stack = Stack(),
-    private var env: TTable = TTable()
+    val env: TTable = TTable(),
+    private val varargs: List<TValue<*>> = emptyList(),
 ) {
+    private val stack = mutableListOf<TValue<*>>()
     private val root: Scope
         get() = parent?.root ?: this
 
-    context(FlowCollector<LuaStatus>)
-    suspend fun load(name: String): TValue<*> {
-        if (name == "_ENV") {
-            return env
+    context(LuaCoroutineScope)
+    private suspend fun loadVar(name: String) = loadVar(TString(name))
+
+    context(LuaCoroutineScope)
+    private suspend fun loadVar(name: TString) {
+        if (name.value == "_ENV") {
+            return_(root.env)
         }
 
-        val key = TString(name)
-        val value = collect {
-            env.luaIndex(key)
-        }.first()
-        if (value !== TNil) {
-            return value
+        val res = collectAsLuaScope {
+            env.luaIndex(name)
         }
-        return parent?.load(name) ?: TNil
-    }
-
-    context(FlowCollector<LuaStatus>)
-    private suspend fun evaluateToStack(block: suspend FlowCollector<LuaStatus>.() -> Unit) {
-        val flow = flow {
-            block()
-        }
-
-        var didStop = false
-        flow.loop {
-            when (it) {
-                is LuaStatus.Error -> {
-                    emit(it)
-                    didStop = true
-                    false
-                }
-
-                is LuaStatus.Return -> {
-                    for (value in it.values) {
-                        stack.push(value)
-                    }
-                    didStop = true
-                    false
-                }
-
-                is LuaStatus.Yield -> {
-                    emit(it)
-                    true
-                }
-            }
-        }
-        if (!didStop) {
-            emit(LuaStatus.Return(emptyList()))
+        if (parent != null && res.size == 1 && res.first() === TNil) {
+            parent.loadVar(name)
+            return
+        } else {
+            return_(res)
         }
     }
 
-    context(FlowCollector<LuaStatus>)
-    suspend fun interpret(ast: ASTNode) {
-        when (ast) {
+    context(LuaCoroutineScope)
+    private suspend fun ASTNode.get(): List<TValue<*>> {
+        evaluate(this)
+        return stack.take(stack.size).also { stack.clear() }
+    }
+
+    context(LuaCoroutineScope)
+    suspend fun evaluate(node: ASTNode) {
+        when (node) {
             is Assign -> {
-                val values = ast.values.map { interpret(it); stack.pop() }
-                for ((i, target) in ast.targets.withIndex()) {
-                    val value = if (0 <= i && i <= values.lastIndex) values[i] else TNil
+                val values = node.values.flatMap {
+                    it.get()
+                }.toMutableList()
+                for (target in node.targets) {
+                    val key = target.key.get().first()
                     if (target.owner == null) {
-                        if ((target.attr as PushString).value == "_ENV") {
-                            env = value as TTable
+                        if (node.local) {
+                            env[key] = values.removeFirst()
                         } else {
-                            root.env.luaNewIndex(TString(target.attr.value), value)
+                            collectAsLuaScope {
+                                root.env.luaNewIndex(key, values.removeFirst())
+                            }
                         }
                     } else {
-                        val owner = let { interpret(target.owner); stack.pop() }
-                        val attr = let { interpret(target.attr); stack.pop() }
-                        if (owner is TTable) {
-                            owner.luaNewIndex(attr, value)
-                        } else {
-                            emit(LuaStatus.Error("Attempt to index a ${owner.type.luaName} value"))
+                        val owner = target.owner.get().first()
+                        collectAsLuaScope {
+                            owner.luaNewIndex(key, values.removeFirst())
                         }
                     }
                 }
+            }
+            is BinaryAdd -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaAdd(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryAnd -> {
+                val lhs = node.left.get().first()
+                if (lhs.asBool()) {
+                    val rhs = node.right.get().first()
+                    stack.add(TBoolean.of(rhs.asBool()))
+                } else {
+                    stack.add(TBoolean.FALSE)
+                }
+            }
+            is BinaryBitwiseAnd -> TODO("BinaryBitwiseAnd")
+            is BinaryBitwiseOr -> TODO("BinaryBitwiseOr")
+            is BinaryBitwiseShl -> TODO("BinaryBitwiseShl")
+            is BinaryBitwiseShr -> TODO("BinaryBitwiseShr")
+            is BinaryBitwiseXor -> TODO("BinaryBitwiseXor")
+            is BinaryConcat -> TODO("BinaryConcat")
+            is BinaryDiv -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaDiv(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryEQ -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaEq(rhs)
+                }
+                stack.add(TBoolean.of(res.first().asBool()))
+            }
+            is BinaryGE -> TODO("BinaryGE")
+            is BinaryGT -> TODO("BinaryGT")
+            is BinaryIDiv -> TODO("BinaryIDiv")
+            is BinaryLE -> TODO("BinaryLE")
+            is BinaryLT -> TODO("BinaryLT")
+            is BinaryMod -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaMod(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryMul -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaMul(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryNE -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaEq(rhs)
+                }
+                stack.add(TBoolean.of(!res.first().asBool()))
+            }
+            is BinaryOr -> {
+                val lhs = node.left.get().first()
+                if (lhs.asBool()) {
+                    stack.add(TBoolean.TRUE)
+                } else {
+                    val rhs = node.right.get().first()
+                    stack.add(TBoolean.of(rhs.asBool()))
+                }
+            }
+            is BinaryPow -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaPow(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinarySub -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaSub(rhs)
+                }
+                stack.add(res.first())
             }
             is Block -> {
-                val flow = flow {
-                    for (statement in ast.statements) {
-                        interpret(statement)
-                    }
-                }
-
-                flow.loop {
-                    emit(it)
-
-                    it is LuaStatus.Yield
+                val newScope = Scope(this)
+                for (statement in node.statements) {
+                    newScope.evaluate(statement)
                 }
             }
-
+            Break -> break_()
+            Continue -> continue_()
             is FunctionCall -> {
-                val args = ast.args.map { interpret(it); stack.pop() }
-                val function = let {
-                    interpret(ast.function)
-                    stack.pop()
+                val args = node.args.flatMap { it.get() }
+                val func = node.func.get().first()
+                val coro = createLuaScope {
+                    func.luaCall(args)
                 }
-                evaluateToStack {
-                    function.luaCall(args)
-                }
-            }
-            is FunctionDefinition -> {
-                val function = TFunction { args ->
-                    val scope = Scope(parent=this@Scope)
-                    var offset = 0
-                    for ((i, arg) in args.withIndex()) {
-                        if (i == 0 && ast.isMethod) {
-                            scope.env["self"] = args[0]
-                            offset = 1
-                        } else {
-                            scope.env[TString(ast.args[i - offset])] = arg
+                var values = emptyList<TValue<*>>()
+                while (true) {
+                    when (val res = coro.send(values)) {
+                        is LuaStatus.Return -> {
+                            stack.addAll(res.values)
+                            break
                         }
-                    }
-                    scope.interpret(ast.block)
-                }
-                if (ast.target.owner != null) {
-                    val owner = let { interpret(ast.target.owner); stack.pop() }
-                    val attr = let { interpret(ast.target.attr); stack.pop() }
-                    if (owner is TTable) {
-                        owner.luaNewIndex(attr, function)
-                    } else {
-                        emit(LuaStatus.Error("Attempt to index a ${owner.type.luaName} value"))
-                    }
-                } else {
-                    if (ast.target.attr == PushNil) {
-                        stack.push(function)
-                    } else {
-                        // TODO: Check for local
-                        val name = let { interpret(ast.target.attr); stack.pop() }
-                        if (ast.local) {
-                            env.luaNewIndex(name, function)
-                        } else {
-                            root.env.luaNewIndex(name, function)
+                        is LuaStatus.Yield -> {
+                            values = emit(res)
+                        }
+                        is LuaStatus.Error, is LuaStatus.StopIteration -> {
+                            emit(res)
+                            break
                         }
                     }
                 }
             }
+            is GenericForLoop -> TODO("GenericForLoop")
+            is Goto -> TODO("Goto")
+            is IfElseBlock -> TODO("IfElseBlock")
+            is Label -> TODO("Label")
             is LoadAttribute -> {
-                val name = let { interpret(ast.name); stack.pop() }
-                val owner = let { interpret(ast.owner); stack.pop() }
-                val res = collect {
-                    owner.luaIndex(name)
-                }.firstOrNull() ?: TNil
-                stack.push(res)
+                val owner = node.owner.get().first()
+                val res = collectAsLuaScope {
+                    owner.luaIndex(node.key.get().first())
+                }
+                stack.add(res.first())
             }
             is LoadName -> {
-                stack.push(load(ast.name))
+                val res = collectAsLuaScope {
+                    loadVar(node.value)
+                }
+                stack.add(res.first())
             }
-            is PushFloat -> {
-                stack.push(TDouble(ast.value.toDouble()))
-            }
-            is PushInt -> {
-                stack.push(TLong(ast.value.toLong()))
-            }
-            is PushString -> {
-                stack.push(TString(ast.value))
-            }
-            is PushBool -> {
-                stack.push(TBoolean.of(ast.value))
-            }
-            is PushNil -> {
-                stack.push(TNil)
-            }
-            is Return -> {
-                emit(LuaStatus.Return(ast.values.map { interpret(it); stack.pop() }))
-            }
+            NoOp -> {}
+            is NumericForLoop -> TODO("NumericForLoop")
+            is PushBoolean -> stack.add(TBoolean.of(node.value))
+            is PushDouble -> stack.add(TDouble(node.value))
+            is PushLong -> stack.add(TLong(node.value))
+            PushNil -> stack.add(TNil)
+            is PushString -> stack.add(TString(node.value))
+            PushVarargs -> stack.addAll(varargs.asReversed())
+            is RepeatUntilLoop -> TODO("RepeatUntilLoop")
+            is Return -> return_(node.values.flatMap { it.get() })
             is Statement -> {
-                interpret(ast.node)
+                evaluate(node.node)
                 stack.clear()
             }
             is TableConstructor -> {
                 val table = TTable()
-                if (ast.values.isNotEmpty()) {
-                    for ((k, v) in ast.values) {
-                        val key = if (k is LoadName) {
-                            TString(k.name)
-                        } else {
-                            let { interpret(k); stack.pop() }
-                        }
-                        val value = let { interpret(v); stack.pop() }
-                        table[key] = value
+                for ((key, value) in node.fields) {
+                    val item = value.get().first()
+                    table[key.get().first()] = item
+                }
+                stack.add(table)
+            }
+            is UnaryBitwiseNot -> TODO("UnaryBitwiseNot")
+            is UnaryLen -> {
+                val res = collectAsLuaScope {
+                    node.item.get().first().luaLen()
+                }
+                stack.add(res.first())
+            }
+            is UnaryNeg -> TODO("UnaryNeg")
+            is UnaryNot -> TODO("UnaryNot")
+            is UnnamedFunction -> {
+                val args = if (node.isVararg) node.namedArgs.size else 0
+                val func = TFunction {
+                    val newScope = Scope(this@Scope, TTable(), it.takeLast(args))
+                    for ((i, arg) in node.namedArgs.withIndex()) {
+                        newScope.env[TString(arg)] = it[i]
                     }
+                    newScope.evaluate(node.body)
                 }
-                stack.push(table)
+                stack.add(func)
             }
-            is BinOpAdd -> {
-                val lhs = let { interpret(ast.lhs); stack.pop() }
-                val rhs = let { interpret(ast.rhs); stack.pop() }
-                val res = collect {
-                    lhs.luaAdd(rhs)
-                }
-                stack.push(res.firstOrNull() ?: TNil)
-            }
-            is BinOpSub -> {
-                val lhs = let { interpret(ast.lhs); stack.pop() }
-                val rhs = let { interpret(ast.rhs); stack.pop() }
-                val res = collect {
-                    lhs.luaSub(rhs)
-                }
-                stack.push(res.firstOrNull() ?: TNil)
-            }
-            is BinOpMul -> {
-                val lhs = let { interpret(ast.lhs); stack.pop() }
-                val rhs = let { interpret(ast.rhs); stack.pop() }
-                val res = collect {
-                    lhs.luaMul(rhs)
-                }
-                stack.push(res.firstOrNull() ?: TNil)
-            }
-            is BinOpDiv -> {
-                val lhs = let { interpret(ast.lhs); stack.pop() }
-                val rhs = let { interpret(ast.rhs); stack.pop() }
-                val res = collect {
-                    lhs.luaDiv(rhs)
-                }
-                stack.push(res.firstOrNull() ?: TNil)
-            }
-            is BinOpMod -> {
-                val lhs = let { interpret(ast.lhs); stack.pop() }
-                val rhs = let { interpret(ast.rhs); stack.pop() }
-                val res = collect {
-                    lhs.luaMod(rhs)
-                }
-                stack.push(res.firstOrNull() ?: TNil)
-            }
-            is BinOpPow -> {
-                val lhs = let { interpret(ast.lhs); stack.pop() }
-                val rhs = let { interpret(ast.rhs); stack.pop() }
-                val res = collect {
-                    lhs.luaPow(rhs)
-                }
-                stack.push(res.firstOrNull() ?: TNil)
-            }
-            is BinOpEq -> {
-                val lhs = let { interpret(ast.lhs); stack.pop() }
-                val rhs = let { interpret(ast.rhs); stack.pop() }
-                val res = collect {
-                    lhs.luaEq(rhs)
-                }.first()
-                when (ast.invert) {
-                    true -> stack.push(TBoolean.of(!res.asBool()))
-                    false -> stack.push(TBoolean.of(res.asBool()))
-                }
-            }
-
-            is BinOpAnd -> {
-                val lhs = let { interpret(ast.lhs); stack.pop() }
-                if (lhs.asBool()) {
-                    val rhs = let { interpret(ast.rhs); stack.pop() }
-                    stack.push(rhs)
-                } else {
-                    stack.push(TBoolean.FALSE)
-                }
-            }
-
-            is UnOpNot -> {
-                val item = let { interpret(ast.item); stack.pop() }
-                stack.push(TBoolean.of(!item.asBool()))
-            }
-
-            else -> TODO(ast::class.simpleName ?: "Unknown ASTNode")
+            is WhileLoop -> TODO("WhileLoop")
         }
     }
 }
+

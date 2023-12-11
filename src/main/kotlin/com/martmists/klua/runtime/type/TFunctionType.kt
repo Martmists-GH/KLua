@@ -1,8 +1,7 @@
 package com.martmists.klua.runtime.type
 
 import com.martmists.klua.runtime.LuaStatus
-import kotlinx.coroutines.flow.FlowCollector
+import com.martmists.klua.runtime.async.LuaCoroutineScope
 
-
-typealias TFunctionType = suspend FlowCollector<LuaStatus>.(List<TValue<*>>) -> Unit
+typealias TFunctionType = suspend LuaCoroutineScope.(List<TValue<*>>) -> Unit
 

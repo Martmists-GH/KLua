@@ -21,12 +21,12 @@ class LuaTests {
         val engine = Interpreter()
         val output = captureStdout {
             runBlocking {
-                engine.interpret("""
+                engine.execute("""
                     print("Hello World!")
                 """.trimIndent())
             }
         }
-        assertEquals("Hello World!\n", output)
+        assertEquals("Hello World!\r\n", output)
     }
 
     @Test
@@ -34,12 +34,12 @@ class LuaTests {
         val engine = Interpreter()
         val output = captureStdout {
             runBlocking {
-                engine.interpret("""
+                engine.execute("""
                     print("Hello " .. "World!")
                 """.trimIndent())
             }
         }
-        assertEquals("Hello World!\n", output)
+        assertEquals("Hello World!\r\n", output)
     }
 
     @Test
@@ -47,13 +47,13 @@ class LuaTests {
         val engine = Interpreter()
         val output = captureStdout {
             runBlocking {
-                engine.interpret("""
+                engine.execute("""
                     print(0x0F | 0xF0)
                     print(0x0F & 0xF0)
                 """.trimIndent())
             }
         }
-        assertEquals("255\n0\n", output)
+        assertEquals("255\r\n0\r\n", output)
     }
 
     @Test
@@ -61,12 +61,12 @@ class LuaTests {
         val engine = Interpreter()
         val output = captureStdout {
             runBlocking {
-                engine.interpret("""
+                engine.execute("""
                     print(#"Hello World!")
                 """.trimIndent())
             }
         }
-        assertEquals("12\n", output)
+        assertEquals("12\r\n", output)
     }
 
     @Test
@@ -74,7 +74,7 @@ class LuaTests {
         val engine = Interpreter()
         val output = captureStdout {
             runBlocking {
-                engine.interpret("""
+                engine.execute("""
                     local mt = {}
                     mt.__add = function(a, b)
                         return a.value + b
@@ -84,7 +84,7 @@ class LuaTests {
                 """.trimIndent())
             }
         }
-        assertEquals("15\n", output)
+        assertEquals("15\r\n", output)
     }
 
     @Test
@@ -92,7 +92,7 @@ class LuaTests {
         val engine = Interpreter()
         val output = captureStdout {
             runBlocking {
-                engine.interpret("""
+                engine.execute("""
                     local function gethash(k)
                       local hash = k
                       local mt = getmetatable(k)

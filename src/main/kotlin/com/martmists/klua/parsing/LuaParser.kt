@@ -64,7 +64,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun start_(): Start_Context? {
+    fun start_(): Start_Context {
         val _localctx = Start_Context(_ctx, state)
         enterRule(_localctx, 0, RULE_start_)
         try {
@@ -104,7 +104,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun chunk(): ChunkContext? {
+    fun chunk(): ChunkContext {
         val _localctx = ChunkContext(_ctx, state)
         enterRule(_localctx, 2, RULE_chunk)
         try {
@@ -150,7 +150,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun block(): BlockContext? {
+    fun block(): BlockContext {
         val _localctx = BlockContext(_ctx, state)
         enterRule(_localctx, 4, RULE_block)
         var _la: Int
@@ -345,7 +345,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun stat(): StatContext? {
+    fun stat(): StatContext {
         val _localctx = StatContext(_ctx, state)
         enterRule(_localctx, 6, RULE_stat)
         var _la: Int
@@ -648,7 +648,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun attnamelist(): AttnamelistContext? {
+    fun attnamelist(): AttnamelistContext {
         val _localctx = AttnamelistContext(_ctx, state)
         enterRule(_localctx, 8, RULE_attnamelist)
         var _la: Int
@@ -715,7 +715,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun attrib(): AttribContext? {
+    fun attrib(): AttribContext {
         val _localctx = AttribContext(_ctx, state)
         enterRule(_localctx, 10, RULE_attrib)
         var _la: Int
@@ -781,7 +781,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun retstat(): RetstatContext? {
+    fun retstat(): RetstatContext {
         val _localctx = RetstatContext(_ctx, state)
         enterRule(_localctx, 12, RULE_retstat)
         var _la: Int
@@ -865,7 +865,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun label(): LabelContext? {
+    fun label(): LabelContext {
         val _localctx = LabelContext(_ctx, state)
         enterRule(_localctx, 14, RULE_label)
         try {
@@ -923,7 +923,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun funcname(): FuncnameContext? {
+    fun funcname(): FuncnameContext {
         val _localctx = FuncnameContext(_ctx, state)
         enterRule(_localctx, 16, RULE_funcname)
         var _la: Int
@@ -1001,7 +1001,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun varlist(): VarlistContext? {
+    fun varlist(): VarlistContext {
         val _localctx = VarlistContext(_ctx, state)
         enterRule(_localctx, 18, RULE_varlist)
         var _la: Int
@@ -1068,7 +1068,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun namelist(): NamelistContext? {
+    fun namelist(): NamelistContext {
         val _localctx = NamelistContext(_ctx, state)
         enterRule(_localctx, 20, RULE_namelist)
         try {
@@ -1137,7 +1137,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun explist(): ExplistContext? {
+    fun explist(): ExplistContext {
         val _localctx = ExplistContext(_ctx, state)
         enterRule(_localctx, 22, RULE_explist)
         var _la: Int
@@ -1324,12 +1324,12 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun exp(): ExpContext? {
+    fun exp(): ExpContext {
         return exp(0)
     }
 
     @Throws(RecognitionException::class)
-    private fun exp(_p: Int): ExpContext? {
+    private fun exp(_p: Int): ExpContext {
         val _parentctx = _ctx
         val _parentState = state
         var _localctx = ExpContext(_ctx, _parentState)
@@ -1599,7 +1599,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun `var`(): VarContext? {
+    fun `var`(): VarContext {
         val _localctx = VarContext(_ctx, state)
         enterRule(_localctx, 26, RULE_var)
         try {
@@ -1720,7 +1720,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun prefixexp(): PrefixexpContext? {
+    fun prefixexp(): PrefixexpContext {
         val _localctx = PrefixexpContext(_ctx, state)
         enterRule(_localctx, 28, RULE_prefixexp)
         try {
@@ -1941,12 +1941,12 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun functioncall(): FunctioncallContext? {
+    fun functioncall(): FunctioncallContext {
         return functioncall(0)
     }
 
     @Throws(RecognitionException::class)
-    private fun functioncall(_p: Int): FunctioncallContext? {
+    private fun functioncall(_p: Int): FunctioncallContext {
         val _parentctx = _ctx
         val _parentState = state
         var _localctx = FunctioncallContext(_ctx, _parentState)
@@ -2279,7 +2279,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun args(): ArgsContext? {
+    fun args(): ArgsContext {
         val _localctx = ArgsContext(_ctx, state)
         enterRule(_localctx, 32, RULE_args)
         var _la: Int
@@ -2359,7 +2359,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun functiondef(): FunctiondefContext? {
+    fun functiondef(): FunctiondefContext {
         val _localctx = FunctiondefContext(_ctx, state)
         enterRule(_localctx, 34, RULE_functiondef)
         try {
@@ -2415,7 +2415,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun funcbody(): FuncbodyContext? {
+    fun funcbody(): FuncbodyContext {
         val _localctx = FuncbodyContext(_ctx, state)
         enterRule(_localctx, 36, RULE_funcbody)
         try {
@@ -2469,7 +2469,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun parlist(): ParlistContext? {
+    fun parlist(): ParlistContext {
         val _localctx = ParlistContext(_ctx, state)
         enterRule(_localctx, 38, RULE_parlist)
         var _la: Int
@@ -2549,7 +2549,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun tableconstructor(): TableconstructorContext? {
+    fun tableconstructor(): TableconstructorContext {
         val _localctx = TableconstructorContext(_ctx, state)
         enterRule(_localctx, 40, RULE_tableconstructor)
         var _la: Int
@@ -2612,7 +2612,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun fieldlist(): FieldlistContext? {
+    fun fieldlist(): FieldlistContext {
         val _localctx = FieldlistContext(_ctx, state)
         enterRule(_localctx, 42, RULE_fieldlist)
         var _la: Int
@@ -2699,7 +2699,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun field(): FieldContext? {
+    fun field(): FieldContext {
         val _localctx = FieldContext(_ctx, state)
         enterRule(_localctx, 44, RULE_field)
         try {
@@ -2775,7 +2775,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun fieldsep(): FieldsepContext? {
+    fun fieldsep(): FieldsepContext {
         val _localctx = FieldsepContext(_ctx, state)
         enterRule(_localctx, 46, RULE_fieldsep)
         var _la: Int
@@ -2833,7 +2833,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun number(): NumberContext? {
+    fun number(): NumberContext {
         val _localctx = NumberContext(_ctx, state)
         enterRule(_localctx, 48, RULE_number)
         var _la: Int
@@ -2887,7 +2887,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     @Throws(RecognitionException::class)
-    fun string(): StringContext? {
+    fun string(): StringContext {
         val _localctx = StringContext(_ctx, state)
         enterRule(_localctx, 50, RULE_string)
         var _la: Int
