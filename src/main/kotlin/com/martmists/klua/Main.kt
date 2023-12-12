@@ -1,9 +1,9 @@
 package com.martmists.klua
 
-import com.martmists.klua.runtime.Interpreter
+import com.martmists.klua.runtime.LuaInterpreter
 
 suspend fun main() {
-    val interpreter = Interpreter()
+    val interpreter = LuaInterpreter()
     interpreter.execute("""
 function dump(o, r, indent, n, noprint)
     local r = r or false

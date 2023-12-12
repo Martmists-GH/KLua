@@ -1,4 +1,4 @@
-import com.martmists.klua.runtime.Interpreter
+import com.martmists.klua.runtime.LuaInterpreter
 import kotlinx.coroutines.runBlocking
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -23,7 +23,7 @@ class LuaTests {
 
     @Test
     fun `Hello World`() {
-        val engine = Interpreter()
+        val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
                 engine.execute("""
@@ -36,7 +36,7 @@ class LuaTests {
 
     @Test
     fun Concatenation() {
-        val engine = Interpreter()
+        val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
                 engine.execute("""
@@ -49,7 +49,7 @@ class LuaTests {
 
     @Test
     fun `Bitwise Operators`() {
-        val engine = Interpreter()
+        val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
                 engine.execute("""
@@ -63,7 +63,7 @@ class LuaTests {
 
     @Test
     fun `Length Operator`() {
-        val engine = Interpreter()
+        val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
                 engine.execute("""
@@ -76,7 +76,7 @@ class LuaTests {
 
     @Test
     fun `Metamethods`() {
-        val engine = Interpreter()
+        val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
                 engine.execute("""

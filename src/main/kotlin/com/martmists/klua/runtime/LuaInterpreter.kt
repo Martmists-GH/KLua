@@ -12,7 +12,7 @@ import com.martmists.klua.runtime.type.TValue
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
-class Interpreter {
+class LuaInterpreter {
     private val root = Scope()
 
     init {
@@ -22,7 +22,7 @@ class Interpreter {
         }
     }
 
-    suspend fun execute(code: String): List<TValue<*>> {
+    suspend fun execute(code: String, beforeExecute: (env: TTable) -> Unit = {}): List<TValue<*>> {
         val stream = CharStreams.fromString(code)
         val lexer = LuaLexer(stream)
         val tokens = CommonTokenStream(lexer)
