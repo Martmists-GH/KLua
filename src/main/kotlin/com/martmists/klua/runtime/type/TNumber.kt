@@ -1,5 +1,7 @@
 package com.martmists.klua.runtime.type
 
+import com.martmists.klua.runtime.LuaException
+
 abstract class TNumber<T : Number>(override val value: T) : TValue<Number>() {
     override val type = ValueType.NUMBER
 
@@ -9,5 +11,17 @@ abstract class TNumber<T : Number>(override val value: T) : TValue<Number>() {
 
     fun asLong(): Long {
         return value.toLong()
+    }
+
+    override var metatable by Companion::metatable
+
+    companion object {
+        private var _metatable: TTable? = null
+        var metatable: TValue<*>
+            get() = _metatable ?: TNil
+            set(value) {
+                if (value !is TTable && value !is TNil) throw LuaException("Table expected, got ${value.type.luaName}")
+                _metatable = if (value is TNil) null else value as TTable
+            }
     }
 }

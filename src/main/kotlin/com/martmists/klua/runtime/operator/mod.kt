@@ -32,24 +32,20 @@ suspend fun TValue<*>.luaMod(other: TValue<*>) {
         }
     }
 
-    if (this is TValueWithMeta<*>) {
-        var meta = this.metatable
-        if (meta is TTable) {
-            val modMeta = meta["__mod"]
-            if (modMeta !is TNil) {
-                modMeta.luaCall(listOf(this, other))
-                return
-            }
+    var meta = this.metatable
+    if (meta is TTable) {
+        val modMeta = meta["__mod"]
+        if (modMeta !is TNil) {
+            modMeta.luaCall(listOf(this, other))
+            return
         }
-        if (other is TValueWithMeta<*>) {
-            meta = other.metatable
-            if (meta is TTable) {
-                val modMeta = meta["__mod"]
-                if (modMeta !is TNil) {
-                    modMeta.luaCall(listOf(this, other))
-                    return
-                }
-            }
+    }
+    meta = other.metatable
+    if (meta is TTable) {
+        val modMeta = meta["__mod"]
+        if (modMeta !is TNil) {
+            modMeta.luaCall(listOf(this, other))
+            return
         }
     }
 

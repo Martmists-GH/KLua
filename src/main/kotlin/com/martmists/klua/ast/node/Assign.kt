@@ -15,10 +15,14 @@ data class Assign(
                             values: List<ASTNode>,
                             local: Boolean): Assign {
             val mapped = targets.map {
-                when (it) {
-                    is LoadName -> Target(null, PushString(it.value))
-                    is LoadAttribute -> Target(it.owner, it.key)
-                    else -> throw IllegalArgumentException("Invalid target: $it")
+                var target = it
+                while (target is ASTNode.Sourced) {
+                    target = target.node
+                }
+                when (target) {
+                    is LoadName -> Target(null, PushString(target.value))
+                    is LoadAttribute -> Target(target.owner, target.key)
+                    else -> throw IllegalArgumentException("Invalid target: $target")
                 }
             }
             return Assign(mapped, values, local)

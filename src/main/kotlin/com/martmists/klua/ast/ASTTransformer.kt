@@ -6,25 +6,35 @@ import com.martmists.klua.ext.fromLuaLong
 import com.martmists.klua.ext.fromLuaNormal
 import com.martmists.klua.parsing.LuaParser.*
 import org.antlr.v4.runtime.ParserRuleContext
+import kotlin.math.max
+import kotlin.math.min
 
-object ASTTransformer {
+@Suppress("UNNECESSARY_NOT_NULL_ASSERTION", "SENSELESS_COMPARISON", "UNNECESSARY_SAFE_CALL")
+class ASTTransformer(private val source: String) {
+    val ParserRuleContext.fullText: String
+        get() {
+            val begin = min(start.startIndex, stop.startIndex)
+            val end = max(start.stopIndex, stop.stopIndex) + 1
+            return source.substring(begin, end)
+        }
+
     @Suppress("unused")
     private fun transform(node: ParserRuleContext): ASTNode {
         TODO(node::class.simpleName ?: "Unknown")
     }
 
     fun transform(node: Start_Context): ASTNode {
-        return transform(node.chunk()!!)
+        return transform(node.chunk()!!) withSource node.fullText
     }
 
     private fun transform(node: ChunkContext): ASTNode {
-        return transform(node.block()!!)
+        return transform(node.block()!!) withSource node.fullText
     }
 
     private fun transform(node: BlockContext): ASTNode {
         val statements = node.stat().map { transform(it) }.toMutableList()
         node.retstat()?.let { statements += transform(it) }
-        return Block(statements)
+        return Block(statements) withSource node.fullText
     }
 
     private fun transform(node: StatContext): ASTNode {
@@ -34,15 +44,18 @@ object ASTTransformer {
                 transform(node.varlist()!!),
                 transform(node.explist()!!),
                 local=false,
-            )
+            ) withSource node.fullText
             node.functioncall() != null -> transform(node.functioncall()!!)
             node.label() != null -> transform(node.label()!!)
-            node.BREAK() != null -> Break
-            node.GOTO() != null -> Goto(node.NAME()!!.text)
+            node.BREAK() != null -> Break withSource node.fullText
+            node.GOTO() != null -> Goto(node.NAME()!!.text) withSource node.fullText
             node.DO() != null -> {
                 when {
                     node.WHILE() != null -> {
-                        WhileLoop(transform(node.exp(0)!!), transform(node.block(0)!!))
+                        WhileLoop(
+                            transform(node.exp(0)!!),
+                            transform(node.block(0)!!)
+                        ) withSource node.fullText
                     }
                     node.EQ() != null -> {
                         NumericForLoop(
@@ -55,14 +68,14 @@ object ASTTransformer {
                                 PushLong(1)
                             },
                             transform(node.block(0)!!)
-                        )
+                        ) withSource node.fullText
                     }
                     node.IN() != null -> {
                         GenericForLoop(
                             transform(node.namelist()!!),
                             transform(node.explist()!!),
                             transform(node.block(0)!!),
-                        )
+                        ) withSource node.fullText
                     }
                     else -> {
                         transform(node.block(0)!!)
@@ -73,9 +86,10 @@ object ASTTransformer {
                 RepeatUntilLoop(
                     transform(node.block(0)!!),
                     transform(node.exp(0)!!)
-                )
+                ) withSource node.fullText
             }
             node.IF() != null -> {
+                // TODO: Source
                 val conditions = node.exp().map { transform(it) }.toMutableList()
                 val blocks = node.block().map { transform(it) }.toMutableList()
                 var last = if (node.ELSE() != null) {
@@ -87,7 +101,7 @@ object ASTTransformer {
                 while (conditions.isNotEmpty()) {
                     last = IfElseBlock(conditions.removeLast(), blocks.removeLast(), last)
                 }
-                last
+                last withSource node.fullText
             }
             node.FUNCTION() != null -> {
                 if (node.LOCAL() != null) {
@@ -95,13 +109,13 @@ object ASTTransformer {
                         listOf(LoadName(node.NAME()!!.text)),
                         listOf(transform(node.funcbody()!!)),
                         local=true,
-                    )
+                    ) withSource node.fullText
                 } else {
                     Assign(
                         listOf(transform(node.funcname()!!)),
                         listOf(transform(node.funcbody()!!)),
                         local=false,
-                    )
+                    ) withSource node.fullText
                 }
             }
             node.attnamelist() != null -> {
@@ -111,18 +125,18 @@ object ASTTransformer {
                         targets,
                         transform(node.explist()!!),
                         local=true,
-                    )
+                    ) withSource node.fullText
                 } else {
                     Assign(
                         targets,
                         List(targets.size) { PushNil },
                         local=true,
-                    )
+                    ) withSource node.fullText
                 }
             }
             else -> throw IllegalStateException("Unknown stat: ${node.text}")
         }
-        return Statement(stmt)
+        return Statement(stmt) withSource node.fullText
     }
 
     private fun transform(node: VarlistContext): List<ASTNode> {
@@ -133,13 +147,15 @@ object ASTTransformer {
         return when {
             node.prefixexp() != null -> {
                 val root = transform(node.prefixexp()!!)
-                if (node.exp() != null) {
-                    LoadAttribute(root, transform(node.exp()!!))
+                val child = if (node.exp() != null) {
+                    transform(node.exp()!!)
                 } else {
-                    LoadAttribute(root, PushString(node.NAME()!!.text))
+                    val text = node.NAME()!!.text
+                    PushString(text) withSource text
                 }
+                LoadAttribute(root, child) withSource node.fullText
             }
-            node.NAME() != null -> LoadName(node.NAME()!!.text)
+            node.NAME() != null -> LoadName(node.NAME()!!.text) withSource node.fullText
             else -> throw IllegalStateException("Unknown var: ${node.text}")
         }
     }
@@ -150,12 +166,12 @@ object ASTTransformer {
 
     private fun transform(node: ExpContext): ASTNode {
         return when {
-            node.NIL() != null -> PushNil
-            node.FALSE() != null -> PushBoolean(false)
-            node.TRUE() != null -> PushBoolean(true)
+            node.NIL() != null -> PushNil withSource node.fullText
+            node.FALSE() != null -> PushBoolean(false) withSource node.fullText
+            node.TRUE() != null -> PushBoolean(true) withSource node.fullText
             node.number() != null -> transform(node.number()!!)
             node.string() != null -> transform(node.string()!!)
-            node.DDD() != null -> PushVarargs
+            node.DDD() != null -> PushVarargs withSource node.fullText
             node.functiondef() != null -> transform(node.functiondef()!!)
             node.prefixexp() != null -> transform(node.prefixexp()!!)
             node.tableconstructor() != null -> transform(node.tableconstructor()!!)
@@ -168,7 +184,7 @@ object ASTTransformer {
                     node.MINUS() != null -> UnaryNeg(item)
                     node.SQUIG() != null -> UnaryBitwiseNot(item)
                     else -> throw IllegalStateException("Unknown unary op: ${node.text}")
-                }
+                } withSource node.fullText
             }
             node.exp().size == 2 -> {
                 // Binary Op
@@ -197,7 +213,7 @@ object ASTTransformer {
                     node.LL() != null -> BinaryBitwiseShl(left, right)
                     node.GG() != null -> BinaryBitwiseShr(left, right)
                     else -> throw IllegalStateException("Unknown binary op: ${node.text}")
-                }
+                } withSource node.fullText
             }
             else -> throw IllegalStateException("Unknown exp: ${node.text}")
         }
@@ -210,7 +226,7 @@ object ASTTransformer {
             node.FLOAT() != null -> PushDouble(node.FLOAT()!!.text.toDouble())
             node.HEX_FLOAT() != null -> PushDouble(node.HEX_FLOAT()!!.text.toDouble())
             else -> throw IllegalStateException("Unknown number: ${node.text}")
-        }
+        } withSource node.fullText
     }
 
     private fun transform(node: StringContext): ASTNode {
@@ -219,7 +235,7 @@ object ASTTransformer {
             node.CHARSTRING() != null -> PushString(node.text.fromLuaChar())
             node.LONGSTRING() != null -> PushString(node.text.fromLuaLong())
             else -> throw IllegalStateException("Unknown string: ${node.text}")
-        }
+        } withSource node.fullText
     }
 
     private fun transform(node: FunctiondefContext): ASTNode {
@@ -229,7 +245,7 @@ object ASTTransformer {
     private fun transform(node: FuncbodyContext): ASTNode {
         val params = transform(node.parlist()!!)
         val body = transform(node.block()!!)
-        return UnnamedFunction(params, body)
+        return UnnamedFunction(params, body) withSource node.fullText
     }
 
     private fun transform(node: ParlistContext): List<String> {
@@ -256,10 +272,14 @@ object ASTTransformer {
                 start = 3
                 transform(node.exp(expIdx++)!!)
             }
-            else -> LoadName(node.NAME(nameIdx++)!!.text)
+            else -> {
+                val text = node.NAME(nameIdx++)!!.text
+                LoadName(text) withSource text
+            }
         }
 
         while (start < node.childCount) {
+            // TODO: Partial source
             when (node.getChild(start).text) {
                 "." -> {
                     owner = LoadAttribute(owner, PushString(node.NAME(nameIdx++)!!.text))
@@ -272,7 +292,7 @@ object ASTTransformer {
             }
         }
 
-        return owner
+        return owner withSource node.fullText
     }
 
     private fun transform(node: FunctioncallContext): ASTNode {
@@ -288,10 +308,14 @@ object ASTTransformer {
                 start = 3
                 transform(node.exp(expIdx++)!!)
             }
-            else -> LoadName(node.NAME(nameIdx++)!!.text)
+            else -> {
+                val text = node.NAME(nameIdx++)!!.text
+                LoadName(text) withSource text
+            }
         }
 
         while (start < node.childCount) {
+            // TODO: Partial source
             when (node.getChild(start).text) {
                 "." -> {
                     owner = LoadAttribute(owner, PushString(node.NAME(nameIdx++)!!.text))
@@ -306,14 +330,14 @@ object ASTTransformer {
                         LoadAttribute(owner, PushString(node.NAME(nameIdx)!!.text)),
                         transform(node.args()!!),
                         isMethod=true
-                    )
+                    ) withSource node.fullText
                 }
                 else -> {
                     return FunctionCall(
                         owner,
                         transform(node.args()!!),
                         isMethod=false
-                    )
+                    ) withSource node.fullText
                 }
             }
         }
@@ -339,7 +363,7 @@ object ASTTransformer {
             }
         }
         @Suppress("UNCHECKED_CAST")
-        return TableConstructor((fields as List<TableConstructor.TableField>).associate { it.key to it.value })
+        return TableConstructor((fields as List<TableConstructor.TableField>).associate { it.key to it.value }) withSource node.fullText
     }
 
     private fun transform(node: FieldlistContext): List<TableConstructor.TableConstructorEntry> {
@@ -361,28 +385,31 @@ object ASTTransformer {
     }
 
     private fun transform(node: LabelContext): ASTNode {
-        return Label(node.NAME()!!.text)
+        return Label(node.NAME()!!.text) withSource node.fullText
     }
 
     private fun transform(node: FuncnameContext): ASTNode {
         val names = node.NAME().map { it.text }.toMutableList()
-        var root: ASTNode = LoadName(names.removeFirst())
+        var root: ASTNode = names.removeFirst().let{
+            LoadName(it) withSource it
+        }
         for (name in names) {
+            // TODO: Partial source
             root = LoadAttribute(root, PushString(name))
         }
-        return root
+        return root withSource node.fullText
     }
 
     private fun transform(node: AttnamelistContext): List<ASTNode> {
         // TODO: Pass attributes
-        return node.NAME().map { LoadName(it.text) }
+        return node.NAME().map { LoadName(it.text) withSource it.text }
     }
 
     private fun transform(node: RetstatContext): ASTNode {
         return when {
-            node.RETURN() != null -> Return(node.explist()?.let(::transform) ?: emptyList())
-            node.BREAK() != null -> Break
-            node.CONTINUE() != null -> Continue
+            node.RETURN() != null -> Return(node.explist()?.let(::transform) ?: emptyList()) withSource node.fullText
+            node.BREAK() != null -> Break withSource node.fullText
+            node.CONTINUE() != null -> Continue withSource node.fullText
             else -> throw IllegalStateException("Unknown retstat: ${node.text}")
         }
     }

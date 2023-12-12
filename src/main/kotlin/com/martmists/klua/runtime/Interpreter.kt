@@ -5,13 +5,10 @@ import com.martmists.klua.parsing.LuaLexer
 import com.martmists.klua.parsing.LuaParser
 import com.martmists.klua.runtime.async.createLuaScope
 import com.martmists.klua.runtime.library.insertCoroutine
-import com.martmists.klua.runtime.library.insertGlobals
+import com.martmists.klua.runtime.library.insertBasic
 import com.martmists.klua.runtime.type.TNil
 import com.martmists.klua.runtime.type.TTable
 import com.martmists.klua.runtime.type.TValue
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.singleOrNull
-import kotlinx.coroutines.flow.toList
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
 
@@ -19,7 +16,7 @@ class Interpreter {
     private val root = Scope()
 
     init {
-        root.env.insertGlobals()
+        root.env.insertBasic()
         root.env["coroutine"] = TTable().also {
             it.insertCoroutine()
         }
@@ -31,9 +28,9 @@ class Interpreter {
         val tokens = CommonTokenStream(lexer)
         val parser = LuaParser(tokens)
         val ast = parser.start_()
-        val node = ASTTransformer.transform(ast)
+        val node = ASTTransformer(code).transform(ast)
 
-        println(node)
+//        println(node)
 
         val scope = createLuaScope {
             Scope(root).evaluate(node)

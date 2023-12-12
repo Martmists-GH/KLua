@@ -26,27 +26,22 @@ suspend fun TValue<*>.luaDiv(other: TValue<*>) {
         } else {
             return_(TDouble(res))
         }
-        return
     }
 
-    if (this is TValueWithMeta<*>) {
-        var meta = this.metatable
-        if (meta is TTable) {
-            val divMeta = meta["__div"]
-            if (divMeta !is TNil) {
-                divMeta.luaCall(listOf(this, other))
-                return
-            }
+    var meta = this.metatable
+    if (meta is TTable) {
+        val divMeta = meta["__div"]
+        if (divMeta !is TNil) {
+            divMeta.luaCall(listOf(this, other))
+            return
         }
-        if (other is TValueWithMeta<*>) {
-            meta = other.metatable
-            if (meta is TTable) {
-                val divMeta = meta["__div"]
-                if (divMeta !is TNil) {
-                    divMeta.luaCall(listOf(this, other))
-                    return
-                }
-            }
+    }
+    meta = other.metatable
+    if (meta is TTable) {
+        val divMeta = meta["__div"]
+        if (divMeta !is TNil) {
+            divMeta.luaCall(listOf(this, other))
+            return
         }
     }
 

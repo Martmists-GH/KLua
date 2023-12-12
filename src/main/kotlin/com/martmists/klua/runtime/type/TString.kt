@@ -1,5 +1,7 @@
 package com.martmists.klua.runtime.type
 
+import com.martmists.klua.runtime.LuaException
+
 class TString(override val value: String) : TValue<String>() {
     override val type = ValueType.STRING
 
@@ -16,5 +18,17 @@ class TString(override val value: String) : TValue<String>() {
             return TDouble(num2)
         }
         return TNil
+    }
+
+    override var metatable by Companion::metatable
+
+    companion object {
+        private var _metatable: TTable? = null
+        var metatable: TValue<*>
+            get() = _metatable ?: TNil
+            set(value) {
+                if (value !is TTable && value !is TNil) throw LuaException("Table expected, got ${value.type.luaName}")
+                _metatable = if (value is TNil) null else value as TTable
+            }
     }
 }

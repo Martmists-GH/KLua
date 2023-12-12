@@ -28,24 +28,20 @@ suspend fun TValue<*>.luaMul(other: TValue<*>) {
         }
     }
 
-    if (this is TValueWithMeta<*>) {
-        var meta = this.metatable
-        if (meta is TTable) {
-            val mulMeta = meta["__mul"]
-            if (mulMeta !is TNil) {
-                mulMeta.luaCall(listOf(this, other))
-                return
-            }
+    var meta = this.metatable
+    if (meta is TTable) {
+        val mulMeta = meta["__mul"]
+        if (mulMeta !is TNil) {
+            mulMeta.luaCall(listOf(this, other))
+            return
         }
-        if (other is TValueWithMeta<*>) {
-            meta = other.metatable
-            if (meta is TTable) {
-                val mulMeta = meta["__mul"]
-                if (mulMeta !is TNil) {
-                    mulMeta.luaCall(listOf(this, other))
-                    return
-                }
-            }
+    }
+    meta = other.metatable
+    if (meta is TTable) {
+        val mulMeta = meta["__mul"]
+        if (mulMeta !is TNil) {
+            mulMeta.luaCall(listOf(this, other))
+            return
         }
     }
 

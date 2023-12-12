@@ -10,18 +10,16 @@ tailrec suspend fun TValue<*>.luaCall(args: List<TValue<*>>) {
         return
     }
 
-    if (this is TValueWithMeta<*>) {
-        val meta = this.metatable
-        if (meta is TTable) {
-            val callMeta = meta["__call"]
-            if (callMeta === this) {
-                error("Detected infinite recursion in __call metamethod")
-            }
+    val meta = this.metatable
+    if (meta is TTable) {
+        val callMeta = meta["__call"]
+        if (callMeta === this) {
+            error("Detected infinite recursion in __call metamethod")
+        }
 
-            if (callMeta !is TNil) {
-                callMeta.luaCall(listOf(this) + args)
-                return
-            }
+        if (callMeta !is TNil) {
+            callMeta.luaCall(listOf(this) + args)
+            return
         }
     }
 

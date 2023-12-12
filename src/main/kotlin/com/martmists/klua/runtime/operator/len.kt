@@ -8,14 +8,12 @@ suspend fun TValue<*>.luaLen() {
         return_(TLong(this.value.length.toLong()))
     }
 
-    if (this is TValueWithMeta<*>) {
-        val meta = this.metatable
-        if (meta is TTable) {
-            val lenMeta = meta["__len"]
-            if (lenMeta !is TNil) {
-                lenMeta.luaCall(listOf(this))
-                return
-            }
+    val meta = this.metatable
+    if (meta is TTable) {
+        val lenMeta = meta["__len"]
+        if (lenMeta !is TNil) {
+            lenMeta.luaCall(listOf(this))
+            return
         }
     }
 

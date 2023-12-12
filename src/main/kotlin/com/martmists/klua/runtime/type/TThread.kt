@@ -1,5 +1,6 @@
 package com.martmists.klua.runtime.type
 
+import com.martmists.klua.runtime.LuaException
 import com.martmists.klua.runtime.LuaStatus
 import com.martmists.klua.runtime.async.LuaCoroutineCommunication
 import com.martmists.klua.runtime.async.LuaCoroutineScope
@@ -29,10 +30,10 @@ class TThread(private val func: TValue<*>) : TValue<Unit>() {
             communication = createLuaScope {
                 func.luaCall(args.toList())
             }
-            communication!!.send(emptyList()).also(::println)
+            communication!!.send(emptyList())
         } else {
             state = State.RUNNING
-            communication!!.send(args.toList()).also(::println)
+            communication!!.send(args.toList())
         }
         state = if (res is LuaStatus.Yield) State.SUSPENDED else State.DEAD
         when (res) {
@@ -41,5 +42,17 @@ class TThread(private val func: TValue<*>) : TValue<Unit>() {
             is LuaStatus.StopIteration -> emit(res)
             is LuaStatus.Yield -> return_(listOf(TBoolean.TRUE) + res.values)
         }
+    }
+
+    override var metatable by Companion::metatable
+
+    companion object {
+        private var _metatable: TTable? = null
+        var metatable: TValue<*>
+            get() = _metatable ?: TNil
+            set(value) {
+                if (value !is TTable && value !is TNil) throw LuaException("Table expected, got ${value.type.luaName}")
+                _metatable = if (value is TNil) null else value as TTable
+            }
     }
 }

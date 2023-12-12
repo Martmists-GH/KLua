@@ -108,8 +108,8 @@ var
 
 // prefixexp ::= var | functioncall | '(' exp ')'
 prefixexp
-    : NAME ('[' exp ']' | '.' NAME)*
-    | functioncall ('[' exp ']' | '.' NAME)*
+    : functioncall ('[' exp ']' | '.' NAME)*
+    | NAME ('[' exp ']' | '.' NAME)*
     | '(' exp ')' ('[' exp ']' | '.' NAME)*
     ;
 

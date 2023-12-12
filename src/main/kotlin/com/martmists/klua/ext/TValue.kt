@@ -28,4 +28,13 @@ suspend fun <T : TValue<*>> List<TValue<*>>.argument(index: Int, vararg types: K
 }
 
 context(LuaCoroutineScope)
+suspend fun List<TValue<*>>.argument(index: Int): TValue<*> {
+    if (index >= this.size) {
+        error("bad argument #${index + 1} (value expected)")
+    }
+    return this[index]
+}
+
+context(LuaCoroutineScope)
+@JvmName("argumentT")
 suspend inline fun <reified T: TValue<*>> List<TValue<*>>.argument(index: Int): T = argument(index, T::class)

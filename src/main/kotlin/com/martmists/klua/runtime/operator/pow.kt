@@ -30,24 +30,20 @@ suspend fun TValue<*>.luaPow(other: TValue<*>) {
         }
     }
 
-    if (this is TValueWithMeta<*>) {
-        var meta = this.metatable
-        if (meta is TTable) {
-            val powMeta = meta["__pow"]
-            if (powMeta !is TNil) {
-                powMeta.luaCall(listOf(this, other))
-                return
-            }
+    var meta = this.metatable
+    if (meta is TTable) {
+        val powMeta = meta["__pow"]
+        if (powMeta !is TNil) {
+            powMeta.luaCall(listOf(this, other))
+            return
         }
-        if (other is TValueWithMeta<*>) {
-            meta = other.metatable
-            if (meta is TTable) {
-                val powMeta = meta["__pow"]
-                if (powMeta !is TNil) {
-                    powMeta.luaCall(listOf(this, other))
-                    return
-                }
-            }
+    }
+    meta = other.metatable
+    if (meta is TTable) {
+        val powMeta = meta["__pow"]
+        if (powMeta !is TNil) {
+            powMeta.luaCall(listOf(this, other))
+            return
         }
     }
 

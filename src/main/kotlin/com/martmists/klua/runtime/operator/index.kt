@@ -11,19 +11,17 @@ suspend fun TValue<*>.luaIndex(other: TValue<*>) {
         }
     }
 
-    if (this is TValueWithMeta<*>) {
-        val meta = this.metatable
-        if (meta is TTable) {
-            val indexMeta = meta["__index"]
+    val meta = this.metatable
+    if (meta is TTable) {
+        val indexMeta = meta["__index"]
 
-            if (indexMeta is TTable) {
-                return_(indexMeta[other])
-            }
+        if (indexMeta is TTable) {
+            return_(indexMeta[other])
+        }
 
-            if (indexMeta !is TNil) {
-                indexMeta.luaCall(listOf(this, other))
-                return
-            }
+        if (indexMeta !is TNil) {
+            indexMeta.luaCall(listOf(this, other))
+            return
         }
     }
 

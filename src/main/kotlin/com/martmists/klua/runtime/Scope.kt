@@ -170,8 +170,17 @@ class Scope(
             Break -> break_()
             Continue -> continue_()
             is FunctionCall -> {
-                val args = node.args.flatMap { it.get() }
-                val func = node.func.get().first()
+                var args = node.args.flatMap { it.get() }
+                val func = if (node.func is LoadAttribute && node.isMethod) {
+                    val owner = node.func.owner.get().first()
+                    args = listOf(owner) + args
+                    val res = collectAsLuaScope {
+                        owner.luaIndex(node.func.key.get().first())
+                    }
+                    res.first()
+                } else {
+                    node.func.get().first()
+                }
                 val coro = createLuaScope {
                     func.luaCall(args)
                 }
@@ -194,7 +203,14 @@ class Scope(
             }
             is GenericForLoop -> TODO("GenericForLoop")
             is Goto -> TODO("Goto")
-            is IfElseBlock -> TODO("IfElseBlock")
+            is IfElseBlock -> {
+                val cond = node.condition.get().first()
+                if (cond.asBool()) {
+                    evaluate(node.ifBlock)
+                } else {
+                    evaluate(node.elseBlock)
+                }
+            }
             is Label -> TODO("Label")
             is LoadAttribute -> {
                 val owner = node.owner.get().first()
@@ -245,14 +261,33 @@ class Scope(
                 val func = TFunction {
                     val newScope = Scope(this@Scope, TTable(), it.takeLast(args))
                     for ((i, arg) in node.namedArgs.withIndex()) {
-                        newScope.env[TString(arg)] = it[i]
+                        newScope.env[TString(arg)] = if (i in it.indices) it[i] else TNil
                     }
                     newScope.evaluate(node.body)
                 }
                 stack.add(func)
             }
             is WhileLoop -> TODO("WhileLoop")
+            is ASTNode.Sourced -> {
+                val scope = createLuaScope {
+                    evaluate(node.node)
+                }
+                var values = emptyList<TValue<*>>()
+                while (true) {
+                    val res = scope.trySend(values) ?: break
+                    if (res is LuaStatus.Error) {
+                        if ("\n\tat" !in res.error || node.node is FunctionCall) {
+                            emit(LuaStatus.Error(res.error + "\n\tat ${node.source}"))
+                            break
+                        }
+                    }
+
+                    values = emit(res)
+                    if (res !is LuaStatus.Yield) {
+                        break
+                    }
+                }
+            }
         }
     }
 }
-

@@ -5,21 +5,6 @@ import com.martmists.klua.runtime.type.*
 
 context(LuaCoroutineScope)
 suspend fun TValue<*>.luaAdd(other: TValue<*>) {
-    if (this is TString) {
-        val lhs = this.coerceToNumber()
-        if (lhs !is TNil) {
-            lhs.luaAdd(other)
-            return
-        }
-    }
-    if (other is TString) {
-        val rhs = other.coerceToNumber()
-        if (rhs !is TNil) {
-            luaAdd(rhs)
-            return
-        }
-    }
-
     if (this is TNumber<*> && other is TNumber<*>) {
         if (this is TDouble || other is TDouble) {
             return_(TDouble(this.value.toDouble() + other.value.toDouble()))
@@ -28,24 +13,20 @@ suspend fun TValue<*>.luaAdd(other: TValue<*>) {
         }
     }
 
-    if (this is TValueWithMeta<*>) {
-        var meta = this.metatable
-        if (meta is TTable) {
-            val addMeta = meta["__add"]
-            if (addMeta !is TNil) {
-                addMeta.luaCall(listOf(this, other))
-                return
-            }
+    var meta = this.metatable
+    if (meta is TTable) {
+        val addMeta = meta["__add"]
+        if (addMeta !is TNil) {
+            addMeta.luaCall(listOf(this, other))
+            return
         }
-        if (other is TValueWithMeta<*>) {
-            meta = other.metatable
-            if (meta is TTable) {
-                val addMeta = meta["__add"]
-                if (addMeta !is TNil) {
-                    addMeta.luaCall(listOf(this, other))
-                    return
-                }
-            }
+    }
+    meta = other.metatable
+    if (meta is TTable) {
+        val addMeta = meta["__add"]
+        if (addMeta !is TNil) {
+            addMeta.luaCall(listOf(this, other))
+            return
         }
     }
 
