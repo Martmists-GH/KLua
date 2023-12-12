@@ -4,21 +4,6 @@ import com.martmists.klua.runtime.type.*
 import com.martmists.klua.runtime.async.LuaCoroutineScope
 context(LuaCoroutineScope)
 suspend fun TValue<*>.luaMod(other: TValue<*>) {
-    if (this is TString) {
-        val lhs = this.coerceToNumber()
-        if (lhs !is TNil) {
-            lhs.luaMod(other)
-            return
-        }
-    }
-    if (other is TString) {
-        val rhs = other.coerceToNumber()
-        if (rhs !is TNil) {
-            luaMod(rhs)
-            return
-        }
-    }
-
     if (this is TNumber<*> && other is TNumber<*>) {
         if (this is TDouble || other is TDouble) {
             val res = this.value.toDouble() % other.value.toDouble()

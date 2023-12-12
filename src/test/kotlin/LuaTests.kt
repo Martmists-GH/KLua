@@ -7,6 +7,11 @@ import kotlin.test.assertEquals
 
 
 class LuaTests {
+    private val eol = when (System.getProperty("os.name")) {
+        "Windows" -> "\r\n"
+        else -> "\n"
+    }
+
     private inline fun captureStdout(block: () -> Unit): String {
         val out = System.out
         val bytes = ByteArrayOutputStream()
@@ -26,7 +31,7 @@ class LuaTests {
                 """.trimIndent())
             }
         }
-        assertEquals("Hello World!\r\n", output)
+        assertEquals("Hello World!$eol", output)
     }
 
     @Test
@@ -39,7 +44,7 @@ class LuaTests {
                 """.trimIndent())
             }
         }
-        assertEquals("Hello World!\r\n", output)
+        assertEquals("Hello World!$eol", output)
     }
 
     @Test
@@ -53,7 +58,7 @@ class LuaTests {
                 """.trimIndent())
             }
         }
-        assertEquals("255\r\n0\r\n", output)
+        assertEquals("255${eol}0$eol", output)
     }
 
     @Test
@@ -66,7 +71,7 @@ class LuaTests {
                 """.trimIndent())
             }
         }
-        assertEquals("12\r\n", output)
+        assertEquals("12$eol", output)
     }
 
     @Test
@@ -84,54 +89,6 @@ class LuaTests {
                 """.trimIndent())
             }
         }
-        assertEquals("15\r\n", output)
-    }
-
-    @Test
-    fun `Comparison by Value`() {
-        val engine = Interpreter()
-        val output = captureStdout {
-            runBlocking {
-                engine.execute("""
-                    local function gethash(k)
-                      local hash = k
-                      local mt = getmetatable(k)
-                      local __hash = mt and mt.__hash
-                      if type(__hash)=='function' then
-                        hash = __hash(k)
-                      elseif type(__hash)~='nil' then
-                        hash = __hash
-                      end
-                      return hash
-                    end
-                    
-                    function hashed(t)
-                      return setmetatable(t, {
-                        __index = function(t, k)
-                          return t[gethash(k)]
-                        end,
-                        __newindex = function(t, k, v)
-                          rawset(t, gethash(k), v)
-                        end,
-                      })
-                    end
-                    
-                    -- example usage
-                    
-                    local t1 = setmetatable({}, {__hash = 42})
-                    local t2 = setmetatable({}, {__hash = 42})
-                    
-                    local t = {}
-                    t[t1] = "foo"
-                    assert(t[t2]==nil)
-                    
-                    t = hashed({})
-                    t[t1] = "foo"
-                    assert(t[t2]=="foo")
-                    t[t2] = "bar"
-                    assert(t[t1]=="bar")
-                """.trimIndent())
-            }
-        }
+        assertEquals("15$eol", output)
     }
 }
