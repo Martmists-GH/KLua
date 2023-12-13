@@ -2,6 +2,7 @@ package com.martmists.klua.runtime
 
 import com.martmists.klua.ast.node.*
 import com.martmists.klua.ext.asBool
+import com.martmists.klua.meta.StackFrame
 import com.martmists.klua.runtime.async.LuaCoroutineScope
 import com.martmists.klua.runtime.async.collectAsLuaScope
 import com.martmists.klua.runtime.async.createLuaScope
@@ -279,20 +280,34 @@ class Scope(
                 var values = emptyList<TValue<*>>()
                 while (true) {
                     val res = scope.trySend(values) ?: break
-                    if (res is LuaStatus.Error) {
-                        if (res.callStack.isEmpty()) {
-                            emit(res.copy(callStack = listOf(LuaStatus.Error.CallSource("<expression>", node.source))))
-                            break
-                        } else {
-                            val last = res.callStack.last()
-                            if (last.source == null) {
-                                emit(res.copy(callStack = res.callStack.dropLast(1) + last.copy(source = node.source)))
-                                break
+
+                    val transformed = when (res) {
+                        is LuaStatus.Error -> {
+                            // Add source to stack trace
+                            if (res.stackTrace.last().source == null) {
+                                res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))
+                            } else {
+                                res
                             }
                         }
+                        is LuaStatus.Return -> res
+                        is LuaStatus.StopIteration -> {
+                            // Add source to stack trace
+                            if (res.stackTrace.last().source == null) {
+                                res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))
+                            } else {
+                                res
+                            }                        }
+                        is LuaStatus.Yield -> {
+                            // Add source to stack trace
+                            if (res.stackTrace.last().source == null) {
+                                res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))
+                            } else {
+                                res
+                            }                        }
                     }
 
-                    values = emit(res)
+                    values = emit(transformed)
                     if (res !is LuaStatus.Yield) {
                         break
                     }

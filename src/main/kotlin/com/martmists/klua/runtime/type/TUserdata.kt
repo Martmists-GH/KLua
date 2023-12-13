@@ -3,7 +3,7 @@ package com.martmists.klua.runtime.type
 import com.martmists.klua.runtime.LuaException
 
 open class TUserdata<T>(override val value: T) : TValue<T>() {
-    override val type = ValueType.USERDATA
+    override val type = LuaType.USERDATA
 
     private var _metatable: TTable? = null
     override var metatable: TValue<*>

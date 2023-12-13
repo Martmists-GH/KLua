@@ -3,7 +3,7 @@ package com.martmists.klua.runtime.type
 import com.martmists.klua.runtime.LuaException
 
 class TString(override val value: String) : TValue<String>() {
-    override val type = ValueType.STRING
+    override val type = LuaType.STRING
 
     override fun hashCode() = value.hashCode()
     override fun equals(other: Any?) = other is TValue<*> && type == other.type && other.value == value

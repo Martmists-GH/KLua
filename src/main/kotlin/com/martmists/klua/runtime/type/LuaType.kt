@@ -1,6 +1,6 @@
 package com.martmists.klua.runtime.type
 
-enum class ValueType {
+enum class LuaType {
     NIL,
     BOOLEAN,
     NUMBER,

@@ -3,7 +3,7 @@ package com.martmists.klua.runtime.type
 import com.martmists.klua.runtime.LuaException
 
 data object TNil: TValue<Unit?>() {
-    override val type = ValueType.NIL
+    override val type = LuaType.NIL
     override val value = null
 
     private var _metatable: TTable? = null

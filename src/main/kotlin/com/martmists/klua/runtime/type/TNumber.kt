@@ -3,7 +3,7 @@ package com.martmists.klua.runtime.type
 import com.martmists.klua.runtime.LuaException
 
 abstract class TNumber<T : Number>(override val value: T) : TValue<Number>() {
-    override val type = ValueType.NUMBER
+    override val type = LuaType.NUMBER
 
     fun asDouble(): Double {
         return value.toDouble()
@@ -15,6 +15,10 @@ abstract class TNumber<T : Number>(override val value: T) : TValue<Number>() {
 
     override var metatable by Companion::metatable
 
+    fun isInteger(): Boolean {
+        return value.toDouble() == value.toLong().toDouble()
+    }
+
     companion object {
         private var _metatable: TTable? = null
         var metatable: TValue<*>
@@ -23,5 +27,10 @@ abstract class TNumber<T : Number>(override val value: T) : TValue<Number>() {
                 if (value !is TTable && value !is TNil) throw LuaException("Table expected, got ${value.type.luaName}")
                 _metatable = if (value is TNil) null else value as TTable
             }
+
+        operator fun invoke(arg: Int) = TLong(arg)
+        operator fun invoke(arg: Long) = TLong(arg)
+        operator fun invoke(arg: Float) = TDouble(arg)
+        operator fun invoke(arg: Double) = TDouble(arg)
     }
 }

@@ -1,9 +1,7 @@
 package com.martmists.klua.runtime.type
 
-import com.martmists.klua.runtime.LuaException
-
 sealed class TValue<T> {
-    abstract val type: ValueType
+    abstract val type: LuaType
     abstract val value: T
     abstract var metatable: TValue<*>
 

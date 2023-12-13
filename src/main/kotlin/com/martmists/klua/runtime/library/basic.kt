@@ -1,6 +1,7 @@
 package com.martmists.klua.runtime.library
 
 import com.martmists.klua.ext.argument
+import com.martmists.klua.ext.asBool
 import com.martmists.klua.runtime.async.collectAsLuaScope
 import com.martmists.klua.runtime.operator.luaToString
 import com.martmists.klua.runtime.type.*
@@ -9,7 +10,14 @@ fun TTable.insertBasic() {
     this["_G"] = this
     this["_VERSION"] = TString("KLua 0.1.0")
     this["assert"] = TFunction { args ->
-        TODO()
+        val value = args.argument(0)
+        val message = args.argument(1, LuaType.STRING, LuaType.NIL) {
+            TString("assertion failed!")
+        } as TString
+        if (!value.asBool()) {
+            error(message.value)
+        }
+        return_(value)
     }
     this["collectgarbage"] = TFunction { args ->
         TODO()
@@ -21,7 +29,8 @@ fun TTable.insertBasic() {
         TODO()
     }
     this["getmetatable"] = TFunction { args ->
-        TODO()
+        val value = args.argument(0)
+        return_(value.metatable)
     }
     this["ipairs"] = TFunction { args ->
         TODO()
@@ -69,10 +78,10 @@ fun TTable.insertBasic() {
         TODO()
     }
     this["setmetatable"] = TFunction { args ->
-        val table = args.argument(0, TTable::class, TUserdata::class)
-        val metatable = args.argument(1, TTable::class, TNil::class)
-        table.metatable = metatable
-        return_(table)
+        val value = args.argument(0)
+        val metatable = args.argument(1, LuaType.NIL, LuaType.TABLE)
+        value.metatable = metatable
+        return_(value)
     }
     this["tonumber"] = TFunction { args ->
         TODO()

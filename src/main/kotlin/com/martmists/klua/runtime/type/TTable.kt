@@ -3,7 +3,7 @@ package com.martmists.klua.runtime.type
 import com.martmists.klua.runtime.LuaException
 
 class TTable : TValue<Map<TValue<*>, TValue<*>>>() {
-    override val type = ValueType.TABLE
+    override val type = LuaType.TABLE
 
     private val map = mutableMapOf<TValue<*>, TValue<*>>()
     override val value: Map<TValue<*>, TValue<*>>

@@ -3,6 +3,7 @@ package com.martmists.klua.runtime.library
 import com.martmists.klua.ext.argument
 import com.martmists.klua.runtime.async.createLuaScope
 import com.martmists.klua.runtime.operator.luaCall
+import com.martmists.klua.runtime.type.LuaType
 import com.martmists.klua.runtime.type.TFunction
 import com.martmists.klua.runtime.type.TTable
 import com.martmists.klua.runtime.type.TThread
@@ -12,7 +13,7 @@ fun TTable.insertCoroutine() {
         TODO()
     }
     this["create"] = TFunction { args ->
-        val func = args.argument<TFunction>(0)
+        val func = args.argument(0, LuaType.FUNCTION) as TFunction
         val co = TThread(func)
         return_(co)
     }
@@ -20,7 +21,7 @@ fun TTable.insertCoroutine() {
         TODO()
     }
     this["resume"] = TFunction { args ->
-        val co = args.argument<TThread>(0)
+        val co = args.argument(0, LuaType.THREAD) as TThread
         co.resume(args.drop(1))
     }
     this["running"] = TFunction { args ->

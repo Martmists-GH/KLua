@@ -158,5 +158,5 @@ class "Vec2" {
 vec1 = Vec2(1, 2)
 vec2 = Vec2(3, 4)
 print(vec1 + vec2)
-    """.trimIndent())
+    """)
 }

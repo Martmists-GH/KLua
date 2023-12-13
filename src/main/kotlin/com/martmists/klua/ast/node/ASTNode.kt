@@ -1,11 +1,11 @@
 package com.martmists.klua.ast.node
 
-import org.antlr.v4.runtime.RuleContext
+import com.martmists.klua.meta.SourceLocation
 
 sealed interface ASTNode {
-    data class Sourced<T : ASTNode>(val node: T, val source: String) : ASTNode by node {
+    data class Sourced<T : ASTNode>(val node: T, val source: SourceLocation) : ASTNode by node {
         override fun toString() = node.toString()
     }
 }
 
-infix fun <T : ASTNode> T.withSource(source: String) = ASTNode.Sourced(this, source)
+infix fun <T : ASTNode> T.withSource(source: SourceLocation) = ASTNode.Sourced(this, source)

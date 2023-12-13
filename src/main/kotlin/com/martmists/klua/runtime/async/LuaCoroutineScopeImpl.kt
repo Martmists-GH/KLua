@@ -1,5 +1,6 @@
 package com.martmists.klua.runtime.async
 
+import com.martmists.klua.meta.StackFrame
 import com.martmists.klua.runtime.LuaStatus
 import com.martmists.klua.runtime.type.TValue
 import kotlin.coroutines.*
@@ -49,7 +50,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
         get() = EmptyCoroutineContext
 
     override suspend fun yield(values: List<TValue<*>>): List<TValue<*>> {
-        nextValue = LuaStatus.Yield(values)
+        nextValue = LuaStatus.Yield(values, listOf(StackFrame(null, null)))
         state = State.READY
         return suspendCoroutine { c ->
             nextStep = c
@@ -68,7 +69,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     }
 
     override suspend fun break_(): Nothing {
-        nextValue = LuaStatus.StopIteration(true)
+        nextValue = LuaStatus.StopIteration(true, listOf(StackFrame(null, null)))
         state = State.SUSPENDED
         suspendCoroutine { c ->
             nextStep = c
@@ -78,7 +79,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     }
 
     override suspend fun continue_(): Nothing {
-        nextValue = LuaStatus.StopIteration(false)
+        nextValue = LuaStatus.StopIteration(false, listOf(StackFrame(null, null)))
         state = State.SUSPENDED
         suspendCoroutine { c ->
             nextStep = c
@@ -88,7 +89,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     }
 
     override suspend fun error(message: String): Nothing {
-        nextValue = LuaStatus.Error(message, emptyList())
+        nextValue = LuaStatus.Error(message, listOf(StackFrame(null, null)))
         state = State.SUSPENDED
         suspendCoroutine { c ->
             nextStep = c

@@ -3,7 +3,7 @@ package com.martmists.klua.runtime.type
 import com.martmists.klua.runtime.LuaException
 
 class TBoolean private constructor(override val value: Boolean) : TValue<Boolean>() {
-    override val type = ValueType.BOOLEAN
+    override val type = LuaType.BOOLEAN
 
     override var metatable by Companion::metatable
 

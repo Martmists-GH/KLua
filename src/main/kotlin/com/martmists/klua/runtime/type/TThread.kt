@@ -14,7 +14,7 @@ class TThread(private val func: TValue<*>) : TValue<Unit>() {
         DEAD
     }
 
-    override val type = ValueType.THREAD
+    override val type = LuaType.THREAD
     override val value = Unit
     private var communication: LuaCoroutineCommunication? = null
     var state = State.SUSPENDED

@@ -4,7 +4,6 @@ import com.martmists.klua.ast.ASTTransformer
 import com.martmists.klua.parsing.LuaLexer
 import com.martmists.klua.parsing.LuaParser
 import com.martmists.klua.runtime.async.createLuaScope
-import com.martmists.klua.runtime.library.insertCoroutine
 import com.martmists.klua.runtime.library.insertBasic
 import com.martmists.klua.runtime.type.TNil
 import com.martmists.klua.runtime.type.TTable
@@ -35,11 +34,11 @@ class LuaInterpreter {
         beforeExecute(root.env)
         return when (val res = scope.send(emptyList())) {
             is LuaStatus.Error -> reportError(res)
-            is LuaStatus.Yield -> throw LuaException("Attempt to yield from outside a coroutine")
+            is LuaStatus.Yield -> reportError(LuaStatus.Error("yield outside coroutine", res.stackTrace))
             is LuaStatus.Return -> res.values
             is LuaStatus.StopIteration -> {
                 if (res.isBreak) {
-                    throw LuaException("break outside loop")
+                    reportError(LuaStatus.Error("break outside loop", res.stackTrace))
                 } else {
                     listOf(TNil)
                 }
@@ -48,20 +47,17 @@ class LuaInterpreter {
     }
 
     private fun reportError(error: LuaStatus.Error): Nothing {
-        val stack = error.callStack
+        val stack = error.stackTrace
         val sb = StringBuilder()
         sb.append(error.error)
-        sb.append("\n")
         for (i in stack.indices) {
             val source = stack[i]
-            sb.append("\tat ")
-            sb.append(source.function)
+            sb.append("\n\tat ${source.function}")
             if (source.source != null) {
-                sb.append(" (")
-                sb.append(source.source)
-                sb.append(")")
+                sb.append("\n\t\t${source.source.line.trimStart(' ', '\t')}\n\t\t")
+                sb.append(" ".repeat(source.source.index))
+                sb.append("^".repeat(source.source.lineLength))
             }
-            sb.append("\n")
         }
         throw LuaException(sb.toString(), error)
     }

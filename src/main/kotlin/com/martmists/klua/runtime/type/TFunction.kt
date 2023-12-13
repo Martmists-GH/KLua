@@ -1,12 +1,13 @@
 package com.martmists.klua.runtime.type
 
+import com.martmists.klua.meta.StackFrame
 import com.martmists.klua.runtime.LuaException
 import com.martmists.klua.runtime.LuaStatus
 import com.martmists.klua.runtime.async.LuaCoroutineScope
 import com.martmists.klua.runtime.async.createLuaScope
 
 class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
-    override val type = ValueType.FUNCTION
+    override val type = LuaType.FUNCTION
     override var metatable by Companion::metatable
 
     var name = "<unknown>"
@@ -19,11 +20,22 @@ class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
 
         var values = emptyList<TValue<*>>()
         while (true) {
-            var res = coro.send(values)
-            if (res is LuaStatus.Error) {
-                res = LuaStatus.Error(res.error, res.callStack + LuaStatus.Error.CallSource(name, null))
+            val transformed = when (val res = coro.send(values)) {
+                is LuaStatus.Error -> {
+                    // Add call to stacktrace
+                    res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(name, res.stackTrace.last().source) + StackFrame(null, null))
+                }
+                is LuaStatus.Yield -> {
+                    // Add call to stacktrace
+                    res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(name, res.stackTrace.last().source) + StackFrame(null, null))
+                }
+                is LuaStatus.Return -> res
+                is LuaStatus.StopIteration -> {
+                    // Add call to stacktrace
+                    res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(name, res.stackTrace.last().source) + StackFrame(null, null))
+                }
             }
-            values = emit(res)
+            values = emit(transformed)
         }
     }
 
