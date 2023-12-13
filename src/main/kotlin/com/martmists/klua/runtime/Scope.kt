@@ -225,6 +225,10 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+            is NamedFunction -> {
+                evaluate(node.function)
+                stack.add((stack.removeLast() as TFunction).apply { name = node.name })
+            }
             NoOp -> {}
             is NumericForLoop -> TODO("NumericForLoop")
             is PushBoolean -> stack.add(TBoolean.of(node.value))
@@ -268,7 +272,7 @@ class Scope(
                 stack.add(func)
             }
             is WhileLoop -> TODO("WhileLoop")
-            is ASTNode.Sourced -> {
+            is ASTNode.Sourced<*> -> {
                 val scope = createLuaScope {
                     evaluate(node.node)
                 }
@@ -276,9 +280,15 @@ class Scope(
                 while (true) {
                     val res = scope.trySend(values) ?: break
                     if (res is LuaStatus.Error) {
-                        if ("\n\tat" !in res.error || node.node is FunctionCall) {
-                            emit(LuaStatus.Error(res.error + "\n\tat ${node.source}"))
+                        if (res.callStack.isEmpty()) {
+                            emit(res.copy(callStack = listOf(LuaStatus.Error.CallSource("<expression>", node.source))))
                             break
+                        } else {
+                            val last = res.callStack.last()
+                            if (last.source == null) {
+                                emit(res.copy(callStack = res.callStack.dropLast(1) + last.copy(source = node.source)))
+                                break
+                            }
                         }
                     }
 

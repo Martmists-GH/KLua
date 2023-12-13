@@ -1,6 +1,5 @@
 package com.martmists.klua.runtime
 
-class LuaException : Exception {
-    constructor(message: String) : super(message)
-    constructor(message: String, cause: Throwable) : super(message, cause)
+class LuaException(message: String, val error: LuaStatus.Error) : Exception(message) {
+    constructor(message: String) : this(message, LuaStatus.Error(message, emptyList()))
 }

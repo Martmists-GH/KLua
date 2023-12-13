@@ -88,7 +88,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     }
 
     override suspend fun error(message: String): Nothing {
-        nextValue = LuaStatus.Error(message)
+        nextValue = LuaStatus.Error(message, emptyList())
         state = State.SUSPENDED
         suspendCoroutine { c ->
             nextStep = c

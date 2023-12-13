@@ -3,8 +3,10 @@ package com.martmists.klua.runtime
 import com.martmists.klua.runtime.type.TValue
 
 sealed interface LuaStatus {
-    data class Error(val error: String) : LuaStatus {
-//        constructor(message: String) : this(LuaException(message))
+    // TODO: Add callstack to all?
+
+    data class Error(val error: String, val callStack: List<CallSource>) : LuaStatus {
+        data class CallSource(val function: String, val source: String?)
     }
     data class Return(val values: List<TValue<*>>) : LuaStatus {
         constructor(vararg values: TValue<*>) : this(values.toList())
@@ -14,6 +16,6 @@ sealed interface LuaStatus {
 
     companion object {
         operator fun invoke(vararg values: TValue<*>) = Return(values.toList())
-        operator fun invoke(message: String) = Error(message)
+        operator fun invoke(message: String) = Error(message, emptyList())
     }
 }

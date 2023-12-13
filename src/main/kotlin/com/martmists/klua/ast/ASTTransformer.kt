@@ -10,7 +10,7 @@ import kotlin.math.max
 import kotlin.math.min
 
 @Suppress("UNNECESSARY_NOT_NULL_ASSERTION", "SENSELESS_COMPARISON", "UNNECESSARY_SAFE_CALL")
-class ASTTransformer(private val source: String) {
+class ASTTransformer(private val source: String, val filename: String = "<input>") {
     val ParserRuleContext.fullText: String
         get() {
             val begin = min(start.startIndex, stop.startIndex)
@@ -105,15 +105,25 @@ class ASTTransformer(private val source: String) {
             }
             node.FUNCTION() != null -> {
                 if (node.LOCAL() != null) {
+                    val name = node.NAME()!!.text
                     Assign(
-                        listOf(LoadName(node.NAME()!!.text)),
-                        listOf(transform(node.funcbody()!!)),
+                        listOf(LoadName(name)),
+                        listOf(transform(node.funcbody()!!).let {
+                            NamedFunction(name, it.node) withSource node.fullText
+                        }),
                         local=true,
                     ) withSource node.fullText
                 } else {
+                    val name = transform(node.funcname()!!)
                     Assign(
-                        listOf(transform(node.funcname()!!)),
-                        listOf(transform(node.funcbody()!!)),
+                        listOf(name),
+                        listOf(transform(node.funcbody()!!).let {
+                            if (name is LoadName) {
+                                NamedFunction(name.value, it.node)
+                            } else {
+                                NamedFunction("$filename:${node.start.line}:${node.start.charPositionInLine}", it.node)
+                            } withSource node.fullText
+                        }),
                         local=false,
                     ) withSource node.fullText
                 }
@@ -172,7 +182,9 @@ class ASTTransformer(private val source: String) {
             node.number() != null -> transform(node.number()!!)
             node.string() != null -> transform(node.string()!!)
             node.DDD() != null -> PushVarargs withSource node.fullText
-            node.functiondef() != null -> transform(node.functiondef()!!)
+            node.functiondef() != null -> transform(node.functiondef()!!).let {
+                NamedFunction("$filename:${node.start.line}:${node.start.charPositionInLine}", it.node) withSource node.fullText
+            }
             node.prefixexp() != null -> transform(node.prefixexp()!!)
             node.tableconstructor() != null -> transform(node.tableconstructor()!!)
             node.exp().size == 1 -> {
@@ -229,7 +241,7 @@ class ASTTransformer(private val source: String) {
         } withSource node.fullText
     }
 
-    private fun transform(node: StringContext): ASTNode {
+    private fun transform(node: StringContext): ASTNode.Sourced<PushString> {
         return when {
             node.NORMALSTRING() != null -> PushString(node.text.fromLuaNormal())
             node.CHARSTRING() != null -> PushString(node.text.fromLuaChar())
@@ -238,11 +250,11 @@ class ASTTransformer(private val source: String) {
         } withSource node.fullText
     }
 
-    private fun transform(node: FunctiondefContext): ASTNode {
+    private fun transform(node: FunctiondefContext): ASTNode.Sourced<UnnamedFunction> {
         return transform(node.funcbody()!!)
     }
 
-    private fun transform(node: FuncbodyContext): ASTNode {
+    private fun transform(node: FuncbodyContext): ASTNode.Sourced<UnnamedFunction> {
         val params = transform(node.parlist()!!)
         val body = transform(node.block()!!)
         return UnnamedFunction(params, body) withSource node.fullText

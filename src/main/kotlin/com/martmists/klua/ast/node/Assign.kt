@@ -16,7 +16,7 @@ data class Assign(
                             local: Boolean): Assign {
             val mapped = targets.map {
                 var target = it
-                while (target is ASTNode.Sourced) {
+                while (target is ASTNode.Sourced<*>) {
                     target = target.node
                 }
                 when (target) {

@@ -1,14 +1,15 @@
 package com.martmists.klua.runtime.type
 
 import com.martmists.klua.runtime.LuaException
+import com.martmists.klua.runtime.LuaStatus
 import com.martmists.klua.runtime.async.LuaCoroutineScope
 import com.martmists.klua.runtime.async.createLuaScope
 
 class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
     override val type = ValueType.FUNCTION
-
     override var metatable by Companion::metatable
 
+    var name = "<unknown>"
 
     context(LuaCoroutineScope)
     suspend fun invoke(args: List<TValue<*>>) {
@@ -18,7 +19,10 @@ class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
 
         var values = emptyList<TValue<*>>()
         while (true) {
-            val res = coro.send(values)
+            var res = coro.send(values)
+            if (res is LuaStatus.Error) {
+                res = LuaStatus.Error(res.error, res.callStack + LuaStatus.Error.CallSource(name, null))
+            }
             values = emit(res)
         }
     }

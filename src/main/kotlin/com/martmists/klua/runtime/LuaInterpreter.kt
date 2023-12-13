@@ -17,9 +17,6 @@ class LuaInterpreter {
 
     init {
         root.env.insertBasic()
-        root.env["coroutine"] = TTable().also {
-            it.insertCoroutine()
-        }
     }
 
     suspend fun execute(code: String, beforeExecute: (env: TTable) -> Unit = {}): List<TValue<*>> {
@@ -35,8 +32,9 @@ class LuaInterpreter {
         val scope = createLuaScope {
             Scope(root).evaluate(node)
         }
+        beforeExecute(root.env)
         return when (val res = scope.send(emptyList())) {
-            is LuaStatus.Error -> throw LuaException(res.error)
+            is LuaStatus.Error -> reportError(res)
             is LuaStatus.Yield -> throw LuaException("Attempt to yield from outside a coroutine")
             is LuaStatus.Return -> res.values
             is LuaStatus.StopIteration -> {
@@ -47,5 +45,24 @@ class LuaInterpreter {
                 }
             }
         }
+    }
+
+    private fun reportError(error: LuaStatus.Error): Nothing {
+        val stack = error.callStack
+        val sb = StringBuilder()
+        sb.append(error.error)
+        sb.append("\n")
+        for (i in stack.indices) {
+            val source = stack[i]
+            sb.append("\tat ")
+            sb.append(source.function)
+            if (source.source != null) {
+                sb.append(" (")
+                sb.append(source.source)
+                sb.append(")")
+            }
+            sb.append("\n")
+        }
+        throw LuaException(sb.toString(), error)
     }
 }

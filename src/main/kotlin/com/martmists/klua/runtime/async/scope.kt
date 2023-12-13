@@ -4,7 +4,7 @@ import com.martmists.klua.runtime.LuaStatus
 import com.martmists.klua.runtime.type.TValue
 import kotlin.coroutines.createCoroutine
 
-suspend fun createLuaScope(block: suspend LuaCoroutineScope.() -> Unit): LuaCoroutineCommunication {
+fun createLuaScope(block: suspend LuaCoroutineScope.() -> Unit): LuaCoroutineCommunication {
     val scope = LuaCoroutineScopeImpl()
     scope.initialStep = block.createCoroutine(scope, scope)
     return scope
