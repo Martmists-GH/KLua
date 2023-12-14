@@ -41,11 +41,11 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class Start_Context(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun chunk(): ChunkContext {
+        fun chunk(): ChunkContext? {
             return getRuleContext(ChunkContext::class.java, 0)
         }
 
-        fun EOF(): TerminalNode {
+        fun EOF(): TerminalNode? {
             return getToken(EOF, 0)
         }
 
@@ -85,7 +85,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class ChunkContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun block(): BlockContext {
+        fun block(): BlockContext? {
             return getRuleContext(BlockContext::class.java, 0)
         }
 
@@ -127,11 +127,11 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(StatContext::class.java)
         }
 
-        fun stat(i: Int): StatContext {
+        fun stat(i: Int): StatContext? {
             return getRuleContext(StatContext::class.java, i)
         }
 
-        fun retstat(): RetstatContext {
+        fun retstat(): RetstatContext? {
             return getRuleContext(RetstatContext::class.java, 0)
         }
 
@@ -194,43 +194,43 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class StatContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun SEMI(): TerminalNode {
+        fun SEMI(): TerminalNode? {
             return getToken(SEMI, 0)
         }
 
-        fun varlist(): VarlistContext {
+        fun varlist(): VarlistContext? {
             return getRuleContext(VarlistContext::class.java, 0)
         }
 
-        fun EQ(): TerminalNode {
+        fun EQ(): TerminalNode? {
             return getToken(EQ, 0)
         }
 
-        fun explist(): ExplistContext {
+        fun explist(): ExplistContext? {
             return getRuleContext(ExplistContext::class.java, 0)
         }
 
-        fun functioncall(): FunctioncallContext {
+        fun functioncall(): FunctioncallContext? {
             return getRuleContext(FunctioncallContext::class.java, 0)
         }
 
-        fun label(): LabelContext {
+        fun label(): LabelContext? {
             return getRuleContext(LabelContext::class.java, 0)
         }
 
-        fun BREAK(): TerminalNode {
+        fun BREAK(): TerminalNode? {
             return getToken(BREAK, 0)
         }
 
-        fun GOTO(): TerminalNode {
+        fun GOTO(): TerminalNode? {
             return getToken(GOTO, 0)
         }
 
-        fun NAME(): TerminalNode {
+        fun NAME(): TerminalNode? {
             return getToken(NAME, 0)
         }
 
-        fun DO(): TerminalNode {
+        fun DO(): TerminalNode? {
             return getToken(DO, 0)
         }
 
@@ -238,15 +238,15 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(BlockContext::class.java)
         }
 
-        fun block(i: Int): BlockContext {
+        fun block(i: Int): BlockContext? {
             return getRuleContext(BlockContext::class.java, i)
         }
 
-        fun END(): TerminalNode {
+        fun END(): TerminalNode? {
             return getToken(END, 0)
         }
 
-        fun WHILE(): TerminalNode {
+        fun WHILE(): TerminalNode? {
             return getToken(WHILE, 0)
         }
 
@@ -254,19 +254,19 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(ExpContext::class.java)
         }
 
-        fun exp(i: Int): ExpContext {
+        fun exp(i: Int): ExpContext? {
             return getRuleContext(ExpContext::class.java, i)
         }
 
-        fun REPEAT(): TerminalNode {
+        fun REPEAT(): TerminalNode? {
             return getToken(REPEAT, 0)
         }
 
-        fun UNTIL(): TerminalNode {
+        fun UNTIL(): TerminalNode? {
             return getToken(UNTIL, 0)
         }
 
-        fun IF(): TerminalNode {
+        fun IF(): TerminalNode? {
             return getToken(IF, 0)
         }
 
@@ -274,7 +274,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(THEN)
         }
 
-        fun THEN(i: Int): TerminalNode {
+        fun THEN(i: Int): TerminalNode? {
             return getToken(THEN, i)
         }
 
@@ -282,15 +282,15 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(ELSEIF)
         }
 
-        fun ELSEIF(i: Int): TerminalNode {
+        fun ELSEIF(i: Int): TerminalNode? {
             return getToken(ELSEIF, i)
         }
 
-        fun ELSE(): TerminalNode {
+        fun ELSE(): TerminalNode? {
             return getToken(ELSE, 0)
         }
 
-        fun FOR(): TerminalNode {
+        fun FOR(): TerminalNode? {
             return getToken(FOR, 0)
         }
 
@@ -298,35 +298,35 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(COMMA)
         }
 
-        fun COMMA(i: Int): TerminalNode {
+        fun COMMA(i: Int): TerminalNode? {
             return getToken(COMMA, i)
         }
 
-        fun namelist(): NamelistContext {
+        fun namelist(): NamelistContext? {
             return getRuleContext(NamelistContext::class.java, 0)
         }
 
-        fun IN(): TerminalNode {
+        fun IN(): TerminalNode? {
             return getToken(IN, 0)
         }
 
-        fun FUNCTION(): TerminalNode {
+        fun FUNCTION(): TerminalNode? {
             return getToken(FUNCTION, 0)
         }
 
-        fun funcname(): FuncnameContext {
+        fun funcname(): FuncnameContext? {
             return getRuleContext(FuncnameContext::class.java, 0)
         }
 
-        fun funcbody(): FuncbodyContext {
+        fun funcbody(): FuncbodyContext? {
             return getRuleContext(FuncbodyContext::class.java, 0)
         }
 
-        fun LOCAL(): TerminalNode {
+        fun LOCAL(): TerminalNode? {
             return getToken(LOCAL, 0)
         }
 
-        fun attnamelist(): AttnamelistContext {
+        fun attnamelist(): AttnamelistContext? {
             return getRuleContext(AttnamelistContext::class.java, 0)
         }
 
@@ -615,7 +615,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(NAME)
         }
 
-        fun NAME(i: Int): TerminalNode {
+        fun NAME(i: Int): TerminalNode? {
             return getToken(NAME, i)
         }
 
@@ -623,7 +623,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(AttribContext::class.java)
         }
 
-        fun attrib(i: Int): AttribContext {
+        fun attrib(i: Int): AttribContext? {
             return getRuleContext(AttribContext::class.java, i)
         }
 
@@ -631,7 +631,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(COMMA)
         }
 
-        fun COMMA(i: Int): TerminalNode {
+        fun COMMA(i: Int): TerminalNode? {
             return getToken(COMMA, i)
         }
 
@@ -690,15 +690,15 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class AttribContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun LT(): TerminalNode {
+        fun LT(): TerminalNode? {
             return getToken(LT, 0)
         }
 
-        fun NAME(): TerminalNode {
+        fun NAME(): TerminalNode? {
             return getToken(NAME, 0)
         }
 
-        fun GT(): TerminalNode {
+        fun GT(): TerminalNode? {
             return getToken(GT, 0)
         }
 
@@ -748,23 +748,23 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class RetstatContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun RETURN(): TerminalNode {
+        fun RETURN(): TerminalNode? {
             return getToken(RETURN, 0)
         }
 
-        fun BREAK(): TerminalNode {
+        fun BREAK(): TerminalNode? {
             return getToken(BREAK, 0)
         }
 
-        fun CONTINUE(): TerminalNode {
+        fun CONTINUE(): TerminalNode? {
             return getToken(CONTINUE, 0)
         }
 
-        fun SEMI(): TerminalNode {
+        fun SEMI(): TerminalNode? {
             return getToken(SEMI, 0)
         }
 
-        fun explist(): ExplistContext {
+        fun explist(): ExplistContext? {
             return getRuleContext(ExplistContext::class.java, 0)
         }
 
@@ -843,11 +843,11 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(CC)
         }
 
-        fun CC(i: Int): TerminalNode {
+        fun CC(i: Int): TerminalNode? {
             return getToken(CC, i)
         }
 
-        fun NAME(): TerminalNode {
+        fun NAME(): TerminalNode? {
             return getToken(NAME, 0)
         }
 
@@ -893,7 +893,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(NAME)
         }
 
-        fun NAME(i: Int): TerminalNode {
+        fun NAME(i: Int): TerminalNode? {
             return getToken(NAME, i)
         }
 
@@ -901,11 +901,11 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(DOT)
         }
 
-        fun DOT(i: Int): TerminalNode {
+        fun DOT(i: Int): TerminalNode? {
             return getToken(DOT, i)
         }
 
-        fun COL(): TerminalNode {
+        fun COL(): TerminalNode? {
             return getToken(COL, 0)
         }
 
@@ -975,7 +975,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(VarContext::class.java)
         }
 
-        fun `var`(i: Int): VarContext {
+        fun `var`(i: Int): VarContext? {
             return getRuleContext(VarContext::class.java, i)
         }
 
@@ -983,7 +983,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(COMMA)
         }
 
-        fun COMMA(i: Int): TerminalNode {
+        fun COMMA(i: Int): TerminalNode? {
             return getToken(COMMA, i)
         }
 
@@ -1042,7 +1042,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(NAME)
         }
 
-        fun NAME(i: Int): TerminalNode {
+        fun NAME(i: Int): TerminalNode? {
             return getToken(NAME, i)
         }
 
@@ -1050,7 +1050,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(COMMA)
         }
 
-        fun COMMA(i: Int): TerminalNode {
+        fun COMMA(i: Int): TerminalNode? {
             return getToken(COMMA, i)
         }
 
@@ -1111,7 +1111,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(ExpContext::class.java)
         }
 
-        fun exp(i: Int): ExpContext {
+        fun exp(i: Int): ExpContext? {
             return getRuleContext(ExpContext::class.java, i)
         }
 
@@ -1119,7 +1119,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(COMMA)
         }
 
-        fun COMMA(i: Int): TerminalNode {
+        fun COMMA(i: Int): TerminalNode? {
             return getToken(COMMA, i)
         }
 
@@ -1174,39 +1174,39 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class ExpContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun NIL(): TerminalNode {
+        fun NIL(): TerminalNode? {
             return getToken(NIL, 0)
         }
 
-        fun FALSE(): TerminalNode {
+        fun FALSE(): TerminalNode? {
             return getToken(FALSE, 0)
         }
 
-        fun TRUE(): TerminalNode {
+        fun TRUE(): TerminalNode? {
             return getToken(TRUE, 0)
         }
 
-        fun number(): NumberContext {
+        fun number(): NumberContext? {
             return getRuleContext(NumberContext::class.java, 0)
         }
 
-        fun string(): StringContext {
+        fun string(): StringContext? {
             return getRuleContext(StringContext::class.java, 0)
         }
 
-        fun DDD(): TerminalNode {
+        fun DDD(): TerminalNode? {
             return getToken(DDD, 0)
         }
 
-        fun functiondef(): FunctiondefContext {
+        fun functiondef(): FunctiondefContext? {
             return getRuleContext(FunctiondefContext::class.java, 0)
         }
 
-        fun prefixexp(): PrefixexpContext {
+        fun prefixexp(): PrefixexpContext? {
             return getRuleContext(PrefixexpContext::class.java, 0)
         }
 
-        fun tableconstructor(): TableconstructorContext {
+        fun tableconstructor(): TableconstructorContext? {
             return getRuleContext(TableconstructorContext::class.java, 0)
         }
 
@@ -1214,99 +1214,99 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(ExpContext::class.java)
         }
 
-        fun exp(i: Int): ExpContext {
+        fun exp(i: Int): ExpContext? {
             return getRuleContext(ExpContext::class.java, i)
         }
 
-        fun NOT(): TerminalNode {
+        fun NOT(): TerminalNode? {
             return getToken(NOT, 0)
         }
 
-        fun POUND(): TerminalNode {
+        fun POUND(): TerminalNode? {
             return getToken(POUND, 0)
         }
 
-        fun MINUS(): TerminalNode {
+        fun MINUS(): TerminalNode? {
             return getToken(MINUS, 0)
         }
 
-        fun SQUIG(): TerminalNode {
+        fun SQUIG(): TerminalNode? {
             return getToken(SQUIG, 0)
         }
 
-        fun CARET(): TerminalNode {
+        fun CARET(): TerminalNode? {
             return getToken(CARET, 0)
         }
 
-        fun STAR(): TerminalNode {
+        fun STAR(): TerminalNode? {
             return getToken(STAR, 0)
         }
 
-        fun SLASH(): TerminalNode {
+        fun SLASH(): TerminalNode? {
             return getToken(SLASH, 0)
         }
 
-        fun PER(): TerminalNode {
+        fun PER(): TerminalNode? {
             return getToken(PER, 0)
         }
 
-        fun SS(): TerminalNode {
+        fun SS(): TerminalNode? {
             return getToken(SS, 0)
         }
 
-        fun PLUS(): TerminalNode {
+        fun PLUS(): TerminalNode? {
             return getToken(PLUS, 0)
         }
 
-        fun DD(): TerminalNode {
+        fun DD(): TerminalNode? {
             return getToken(DD, 0)
         }
 
-        fun LT(): TerminalNode {
+        fun LT(): TerminalNode? {
             return getToken(LT, 0)
         }
 
-        fun GT(): TerminalNode {
+        fun GT(): TerminalNode? {
             return getToken(GT, 0)
         }
 
-        fun LE(): TerminalNode {
+        fun LE(): TerminalNode? {
             return getToken(LE, 0)
         }
 
-        fun GE(): TerminalNode {
+        fun GE(): TerminalNode? {
             return getToken(GE, 0)
         }
 
-        fun SQEQ(): TerminalNode {
+        fun SQEQ(): TerminalNode? {
             return getToken(SQEQ, 0)
         }
 
-        fun EE(): TerminalNode {
+        fun EE(): TerminalNode? {
             return getToken(EE, 0)
         }
 
-        fun AND(): TerminalNode {
+        fun AND(): TerminalNode? {
             return getToken(AND, 0)
         }
 
-        fun OR(): TerminalNode {
+        fun OR(): TerminalNode? {
             return getToken(OR, 0)
         }
 
-        fun AMP(): TerminalNode {
+        fun AMP(): TerminalNode? {
             return getToken(AMP, 0)
         }
 
-        fun PIPE(): TerminalNode {
+        fun PIPE(): TerminalNode? {
             return getToken(PIPE, 0)
         }
 
-        fun LL(): TerminalNode {
+        fun LL(): TerminalNode? {
             return getToken(LL, 0)
         }
 
-        fun GG(): TerminalNode {
+        fun GG(): TerminalNode? {
             return getToken(GG, 0)
         }
 
@@ -1559,27 +1559,27 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class VarContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun NAME(): TerminalNode {
+        fun NAME(): TerminalNode? {
             return getToken(NAME, 0)
         }
 
-        fun prefixexp(): PrefixexpContext {
+        fun prefixexp(): PrefixexpContext? {
             return getRuleContext(PrefixexpContext::class.java, 0)
         }
 
-        fun OB(): TerminalNode {
+        fun OB(): TerminalNode? {
             return getToken(OB, 0)
         }
 
-        fun exp(): ExpContext {
+        fun exp(): ExpContext? {
             return getRuleContext(ExpContext::class.java, 0)
         }
 
-        fun CB(): TerminalNode {
+        fun CB(): TerminalNode? {
             return getToken(CB, 0)
         }
 
-        fun DOT(): TerminalNode {
+        fun DOT(): TerminalNode? {
             return getToken(DOT, 0)
         }
 
@@ -1652,7 +1652,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class PrefixexpContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun functioncall(): FunctioncallContext {
+        fun functioncall(): FunctioncallContext? {
             return getRuleContext(FunctioncallContext::class.java, 0)
         }
 
@@ -1660,7 +1660,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(OB)
         }
 
-        fun OB(i: Int): TerminalNode {
+        fun OB(i: Int): TerminalNode? {
             return getToken(OB, i)
         }
 
@@ -1668,7 +1668,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(ExpContext::class.java)
         }
 
-        fun exp(i: Int): ExpContext {
+        fun exp(i: Int): ExpContext? {
             return getRuleContext(ExpContext::class.java, i)
         }
 
@@ -1676,7 +1676,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(CB)
         }
 
-        fun CB(i: Int): TerminalNode {
+        fun CB(i: Int): TerminalNode? {
             return getToken(CB, i)
         }
 
@@ -1684,7 +1684,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(DOT)
         }
 
-        fun DOT(i: Int): TerminalNode {
+        fun DOT(i: Int): TerminalNode? {
             return getToken(DOT, i)
         }
 
@@ -1692,15 +1692,15 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(NAME)
         }
 
-        fun NAME(i: Int): TerminalNode {
+        fun NAME(i: Int): TerminalNode? {
             return getToken(NAME, i)
         }
 
-        fun OP(): TerminalNode {
+        fun OP(): TerminalNode? {
             return getToken(OP, 0)
         }
 
-        fun CP(): TerminalNode {
+        fun CP(): TerminalNode? {
             return getToken(CP, 0)
         }
 
@@ -1869,11 +1869,11 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(NAME)
         }
 
-        fun NAME(i: Int): TerminalNode {
+        fun NAME(i: Int): TerminalNode? {
             return getToken(NAME, i)
         }
 
-        fun args(): ArgsContext {
+        fun args(): ArgsContext? {
             return getRuleContext(ArgsContext::class.java, 0)
         }
 
@@ -1881,7 +1881,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(OB)
         }
 
-        fun OB(i: Int): TerminalNode {
+        fun OB(i: Int): TerminalNode? {
             return getToken(OB, i)
         }
 
@@ -1889,7 +1889,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(ExpContext::class.java)
         }
 
-        fun exp(i: Int): ExpContext {
+        fun exp(i: Int): ExpContext? {
             return getRuleContext(ExpContext::class.java, i)
         }
 
@@ -1897,7 +1897,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(CB)
         }
 
-        fun CB(i: Int): TerminalNode {
+        fun CB(i: Int): TerminalNode? {
             return getToken(CB, i)
         }
 
@@ -1905,23 +1905,23 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getTokens(DOT)
         }
 
-        fun DOT(i: Int): TerminalNode {
+        fun DOT(i: Int): TerminalNode? {
             return getToken(DOT, i)
         }
 
-        fun OP(): TerminalNode {
+        fun OP(): TerminalNode? {
             return getToken(OP, 0)
         }
 
-        fun CP(): TerminalNode {
+        fun CP(): TerminalNode? {
             return getToken(CP, 0)
         }
 
-        fun COL(): TerminalNode {
+        fun COL(): TerminalNode? {
             return getToken(COL, 0)
         }
 
-        fun functioncall(): FunctioncallContext {
+        fun functioncall(): FunctioncallContext? {
             return getRuleContext(FunctioncallContext::class.java, 0)
         }
 
@@ -2241,23 +2241,23 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class ArgsContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun OP(): TerminalNode {
+        fun OP(): TerminalNode? {
             return getToken(OP, 0)
         }
 
-        fun CP(): TerminalNode {
+        fun CP(): TerminalNode? {
             return getToken(CP, 0)
         }
 
-        fun explist(): ExplistContext {
+        fun explist(): ExplistContext? {
             return getRuleContext(ExplistContext::class.java, 0)
         }
 
-        fun tableconstructor(): TableconstructorContext {
+        fun tableconstructor(): TableconstructorContext? {
             return getRuleContext(TableconstructorContext::class.java, 0)
         }
 
-        fun string(): StringContext {
+        fun string(): StringContext? {
             return getRuleContext(StringContext::class.java, 0)
         }
 
@@ -2333,11 +2333,11 @@ class LuaParser(input: TokenStream?) : Parser(input) {
 
     class FunctiondefContext(parent: ParserRuleContext?, invokingState: Int) :
         ParserRuleContext(parent, invokingState) {
-        fun FUNCTION(): TerminalNode {
+        fun FUNCTION(): TerminalNode? {
             return getToken(FUNCTION, 0)
         }
 
-        fun funcbody(): FuncbodyContext {
+        fun funcbody(): FuncbodyContext? {
             return getRuleContext(FuncbodyContext::class.java, 0)
         }
 
@@ -2377,23 +2377,23 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class FuncbodyContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun OP(): TerminalNode {
+        fun OP(): TerminalNode? {
             return getToken(OP, 0)
         }
 
-        fun parlist(): ParlistContext {
+        fun parlist(): ParlistContext? {
             return getRuleContext(ParlistContext::class.java, 0)
         }
 
-        fun CP(): TerminalNode {
+        fun CP(): TerminalNode? {
             return getToken(CP, 0)
         }
 
-        fun block(): BlockContext {
+        fun block(): BlockContext? {
             return getRuleContext(BlockContext::class.java, 0)
         }
 
-        fun END(): TerminalNode {
+        fun END(): TerminalNode? {
             return getToken(END, 0)
         }
 
@@ -2439,15 +2439,15 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class ParlistContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun namelist(): NamelistContext {
+        fun namelist(): NamelistContext? {
             return getRuleContext(NamelistContext::class.java, 0)
         }
 
-        fun COMMA(): TerminalNode {
+        fun COMMA(): TerminalNode? {
             return getToken(COMMA, 0)
         }
 
-        fun DDD(): TerminalNode {
+        fun DDD(): TerminalNode? {
             return getToken(DDD, 0)
         }
 
@@ -2519,15 +2519,15 @@ class LuaParser(input: TokenStream?) : Parser(input) {
 
     class TableconstructorContext(parent: ParserRuleContext?, invokingState: Int) :
         ParserRuleContext(parent, invokingState) {
-        fun OCU(): TerminalNode {
+        fun OCU(): TerminalNode? {
             return getToken(OCU, 0)
         }
 
-        fun CCU(): TerminalNode {
+        fun CCU(): TerminalNode? {
             return getToken(CCU, 0)
         }
 
-        fun fieldlist(): FieldlistContext {
+        fun fieldlist(): FieldlistContext? {
             return getRuleContext(FieldlistContext::class.java, 0)
         }
 
@@ -2582,7 +2582,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(FieldContext::class.java)
         }
 
-        fun field(i: Int): FieldContext {
+        fun field(i: Int): FieldContext? {
             return getRuleContext(FieldContext::class.java, i)
         }
 
@@ -2590,7 +2590,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(FieldsepContext::class.java)
         }
 
-        fun fieldsep(i: Int): FieldsepContext {
+        fun fieldsep(i: Int): FieldsepContext? {
             return getRuleContext(FieldsepContext::class.java, i)
         }
 
@@ -2657,7 +2657,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class FieldContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun OB(): TerminalNode {
+        fun OB(): TerminalNode? {
             return getToken(OB, 0)
         }
 
@@ -2665,19 +2665,19 @@ class LuaParser(input: TokenStream?) : Parser(input) {
             return getRuleContexts(ExpContext::class.java)
         }
 
-        fun exp(i: Int): ExpContext {
+        fun exp(i: Int): ExpContext? {
             return getRuleContext(ExpContext::class.java, i)
         }
 
-        fun CB(): TerminalNode {
+        fun CB(): TerminalNode? {
             return getToken(CB, 0)
         }
 
-        fun EQ(): TerminalNode {
+        fun EQ(): TerminalNode? {
             return getToken(EQ, 0)
         }
 
-        fun NAME(): TerminalNode {
+        fun NAME(): TerminalNode? {
             return getToken(NAME, 0)
         }
 
@@ -2749,11 +2749,11 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class FieldsepContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun COMMA(): TerminalNode {
+        fun COMMA(): TerminalNode? {
             return getToken(COMMA, 0)
         }
 
-        fun SEMI(): TerminalNode {
+        fun SEMI(): TerminalNode? {
             return getToken(SEMI, 0)
         }
 
@@ -2799,19 +2799,19 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class NumberContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun INT(): TerminalNode {
+        fun INT(): TerminalNode? {
             return getToken(INT, 0)
         }
 
-        fun HEX(): TerminalNode {
+        fun HEX(): TerminalNode? {
             return getToken(HEX, 0)
         }
 
-        fun FLOAT(): TerminalNode {
+        fun FLOAT(): TerminalNode? {
             return getToken(FLOAT, 0)
         }
 
-        fun HEX_FLOAT(): TerminalNode {
+        fun HEX_FLOAT(): TerminalNode? {
             return getToken(HEX_FLOAT, 0)
         }
 
@@ -2857,15 +2857,15 @@ class LuaParser(input: TokenStream?) : Parser(input) {
     }
 
     class StringContext(parent: ParserRuleContext?, invokingState: Int) : ParserRuleContext(parent, invokingState) {
-        fun NORMALSTRING(): TerminalNode {
+        fun NORMALSTRING(): TerminalNode? {
             return getToken(NORMALSTRING, 0)
         }
 
-        fun CHARSTRING(): TerminalNode {
+        fun CHARSTRING(): TerminalNode? {
             return getToken(CHARSTRING, 0)
         }
 
-        fun LONGSTRING(): TerminalNode {
+        fun LONGSTRING(): TerminalNode? {
             return getToken(LONGSTRING, 0)
         }
 
@@ -2910,7 +2910,7 @@ class LuaParser(input: TokenStream?) : Parser(input) {
         return _localctx
     }
 
-    override fun sempred(_localctx: RuleContext, ruleIndex: Int, predIndex: Int): Boolean {
+    override fun sempred(_localctx: RuleContext?, ruleIndex: Int, predIndex: Int): Boolean {
         when (ruleIndex) {
             12 -> return exp_sempred(_localctx as ExpContext, predIndex)
             15 -> return functioncall_sempred(_localctx as FunctioncallContext, predIndex)
@@ -3092,9 +3092,9 @@ class LuaParser(input: TokenStream?) : Parser(input) {
         init {
             tokenNames = Array(_SYMBOLIC_NAMES.size) { "" }
             for (i in tokenNames.indices) {
-                tokenNames[i] = VOCABULARY.getLiteralName(i)
+                tokenNames[i] = VOCABULARY.getLiteralName(i) ?: ""
                 if (tokenNames[i] == "") {
-                    tokenNames[i] = VOCABULARY.getSymbolicName(i)
+                    tokenNames[i] = VOCABULARY.getSymbolicName(i) ?: ""
                 }
 
                 if (tokenNames[i] == "") {

@@ -6,9 +6,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 
+@Suppress("TestFunctionName")
 class LuaTests {
-    private val eol = when (System.getProperty("os.name")) {
-        "Windows" -> "\r\n"
+    private val os = System.getProperty("os.name")
+    private val eol = when {
+        os.startsWith("Windows") -> "\r\n"
         else -> "\n"
     }
 
@@ -75,7 +77,7 @@ class LuaTests {
     }
 
     @Test
-    fun `Metamethods`() {
+    fun Metamethods() {
         val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {

@@ -110,38 +110,38 @@ fun TTable.insertString() {
         val s = args.argument(0, LuaType.STRING) as TString
         return_(TString(s.value.reversed()))
     }
-//    this["sub"] = TFunction { args ->
-//        val s = args.argument(0, LuaType.STRING) as TString
-//        var i = args.argument(1, LuaType.NUMBER) as TNumber<*>
-//        if (i !is TLong) {
-//            if (!i.isInteger()) {
-//                error("bad argument #2 (number has no integer representation)")
-//            }
-//            i = TLong(i.value.toLong())
-//        }
-//        var j = args.argument(2, LuaType.NUMBER, LuaType.NIL) {
-//            TLong(-1)
-//        } as TNumber<*>
-//        if (j !is TLong) {
-//            if (!j.isInteger()) {
-//                error("bad argument #3 (number has no integer representation)")
-//            }
-//            j = TLong(j.value.toLong())
-//        }
-//
-//        val startOffset = if (i.value.toInt() < 0) {
-//            s.value.length + i.value.toInt() + 1
-//        } else {
-//            i.value.toInt() - 1
-//        }.coerceAtLeast(0)
-//        val endOffset = if (j.value.toInt() < 0) {
-//            s.value.length + j.value.toInt() + 2
-//        } else {
-//            j.value.toInt()
-//        }.coerceAtMost(s.value.length)
-//
-//        return_(TString(s.value.substring(startOffset, endOffset)))
-//    }
+    this["sub"] = TFunction { args ->
+        val s = args.argument(0, LuaType.STRING) as TString
+        var i = args.argument(1, LuaType.NUMBER) as TNumber<*>
+        if (i !is TLong) {
+            if (!i.isInteger()) {
+                error("bad argument #2 (number has no integer representation)")
+            }
+            i = TLong(i.value.toLong())
+        }
+        var j = args.argument(2, LuaType.NUMBER, LuaType.NIL) {
+            TLong(-1)
+        } as TNumber<*>
+        if (j !is TLong) {
+            if (!j.isInteger()) {
+                error("bad argument #3 (number has no integer representation)")
+            }
+            j = TLong(j.value.toLong())
+        }
+
+        val startOffset = if (i.value.toInt() < 0) {
+            s.value.length + i.value.toInt() + 1
+        } else {
+            i.value.toInt() - 1
+        }.coerceAtLeast(0)
+        val endOffset = if (j.value.toInt() < 0) {
+            s.value.length + j.value.toInt() + 2
+        } else {
+            j.value.toInt()
+        }.coerceAtMost(s.value.length)
+
+        return_(TString(s.value.substring(startOffset, endOffset)))
+    }
     this["unpack"] = TFunction { args ->
         TODO()
     }

@@ -86,12 +86,54 @@ class Scope(
                     stack.add(TBoolean.FALSE)
                 }
             }
-            is BinaryBitwiseAnd -> TODO("BinaryBitwiseAnd")
-            is BinaryBitwiseOr -> TODO("BinaryBitwiseOr")
-            is BinaryBitwiseShl -> TODO("BinaryBitwiseShl")
-            is BinaryBitwiseShr -> TODO("BinaryBitwiseShr")
-            is BinaryBitwiseXor -> TODO("BinaryBitwiseXor")
-            is BinaryConcat -> TODO("BinaryConcat")
+            is BinaryBitwiseAnd -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaBand(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryBitwiseOr -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaBor(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryBitwiseShl -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaShl(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryBitwiseShr -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaShr(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryBitwiseXor -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaBxor(rhs)
+                }
+                stack.add(res.first())
+            }
+            is BinaryConcat -> {
+                val lhs = node.left.get().first()
+                val rhs = node.right.get().first()
+                val res = collectAsLuaScope {
+                    lhs.luaConcat(rhs)
+                }
+                stack.add(res.first())
+            }
             is BinaryDiv -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()

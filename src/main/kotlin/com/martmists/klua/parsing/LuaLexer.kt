@@ -47,26 +47,26 @@ class LuaLexer(input: CharStream?) : LuaLexerBase(input!!) {
         return _ATN
     }
 
-    override fun action(_localctx: RuleContext, ruleIndex: Int, actionIndex: Int) {
+    override fun action(_localctx: RuleContext?, ruleIndex: Int, actionIndex: Int) {
         when (ruleIndex) {
             74 -> COMMENT_action(_localctx, actionIndex)
         }
     }
 
-    private fun COMMENT_action(_localctx: RuleContext, actionIndex: Int) {
+    private fun COMMENT_action(_localctx: RuleContext?, actionIndex: Int) {
         when (actionIndex) {
             0 -> this.HandleComment()
         }
     }
 
-    override fun sempred(_localctx: RuleContext, ruleIndex: Int, predIndex: Int): Boolean {
+    override fun sempred(_localctx: RuleContext?, ruleIndex: Int, predIndex: Int): Boolean {
         when (ruleIndex) {
             77 -> return SHEBANG_sempred(_localctx, predIndex)
         }
         return true
     }
 
-    private fun SHEBANG_sempred(_localctx: RuleContext, predIndex: Int): Boolean {
+    private fun SHEBANG_sempred(_localctx: RuleContext?, predIndex: Int): Boolean {
         when (predIndex) {
             0 -> return this.IsLine1Col0()
         }
@@ -213,9 +213,9 @@ class LuaLexer(input: CharStream?) : LuaLexerBase(input!!) {
         init {
             tokenNames = Array(_SYMBOLIC_NAMES.size) { "" }
             for (i in tokenNames.indices) {
-                tokenNames[i] = VOCABULARY.getLiteralName(i)
+                tokenNames[i] = VOCABULARY.getLiteralName(i) ?: ""
                 if (tokenNames[i] == "") {
-                    tokenNames[i] = VOCABULARY.getSymbolicName(i)
+                    tokenNames[i] = VOCABULARY.getSymbolicName(i) ?: ""
                 }
 
                 if (tokenNames[i] == "") {
