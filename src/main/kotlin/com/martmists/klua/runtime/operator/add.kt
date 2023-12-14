@@ -30,5 +30,9 @@ suspend fun TValue<*>.luaAdd(other: TValue<*>) {
         }
     }
 
-    error("attempt to perform arithmetic on a ${type.luaName} value")
+    if (this is TNumber<*>) {
+        error("attempt to perform arithmetic on a ${other.type.luaName} value")
+    } else {
+        error("attempt to perform arithmetic on a ${type.luaName} value")
+    }
 }

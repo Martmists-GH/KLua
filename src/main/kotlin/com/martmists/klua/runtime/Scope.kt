@@ -41,7 +41,7 @@ class Scope(
     context(LuaCoroutineScope)
     private suspend fun ASTNode.get(): List<TValue<*>> {
         evaluate(this)
-        return stack.take(stack.size).also { stack.clear() }
+        return stack.take(stack.size).also { stack.clear() }.asReversed()
     }
 
     context(LuaCoroutineScope)
@@ -205,7 +205,7 @@ class Scope(
                 stack.add(res.first())
             }
             is Block -> {
-                val newScope = Scope(this)
+                val newScope = Scope(this, varargs=varargs)
                 for (statement in node.statements) {
                     newScope.evaluate(statement)
                 }
@@ -213,10 +213,10 @@ class Scope(
             Break -> break_()
             Continue -> continue_()
             is FunctionCall -> {
-                var args = node.args.flatMap { it.get() }
+                val args = mutableListOf<TValue<*>>()
                 val func = if (node.func is LoadAttribute && node.isMethod) {
                     val owner = node.func.owner.get().first()
-                    args = listOf(owner) + args
+                    args.add(owner)
                     val res = collectAsLuaScope {
                         owner.luaIndex(node.func.key.get().first())
                     }
@@ -224,6 +224,7 @@ class Scope(
                 } else {
                     node.func.get().first()
                 }
+                args += node.args.flatMap { it.get() }
                 val coro = createLuaScope {
                     func.luaCall(args)
                 }
@@ -244,7 +245,52 @@ class Scope(
                     }
                 }
             }
-            is GenericForLoop -> TODO("GenericForLoop")
+            is GenericForLoop -> {
+                node.expressions.forEach {
+                    evaluate(it)
+                }
+                var initial = stack.removeLast()
+                val invariant = stack.removeLast()
+                val iterator = stack.removeLast()
+                stack.clear()
+
+                genericFor@while (true) {
+                    val values = collectAsLuaScope {
+                        iterator.luaCall(listOf(invariant, initial))
+                    }
+                    initial = values.first()
+                    if (initial === TNil) {
+                        break
+                    }
+                    val scope = createLuaScope {
+                        Scope(this@Scope).apply {
+                            for ((i, name) in node.names.withIndex()) {
+                                env[TString(name)] = values[i]
+                            }
+                            evaluate(node.body)
+                        }
+                    }
+                    var values2 = emptyList<TValue<*>>()
+                    inner@while (true) {
+                        val res = scope.trySend(values2)
+                        if (res is LuaStatus.StopIteration) {
+                            if (res.isBreak) {
+                                break@genericFor
+                            } else {
+                                continue@genericFor
+                            }
+                        }
+                        if (res != null) {
+                            values2 = emit(res)
+                            if (res !is LuaStatus.Yield) {
+                                break@genericFor
+                            }
+                        } else {
+                            break@inner
+                        }
+                    }
+                }
+            }
             is Goto -> TODO("Goto")
             is IfElseBlock -> {
                 val cond = node.condition.get().first()
@@ -279,7 +325,9 @@ class Scope(
             is PushLong -> stack.add(TLong(node.value))
             PushNil -> stack.add(TNil)
             is PushString -> stack.add(TString(node.value))
-            PushVarargs -> stack.addAll(varargs.asReversed())
+            PushVarargs -> {
+                stack.addAll(varargs.asReversed())
+            }
             is RepeatUntilLoop -> TODO("RepeatUntilLoop")
             is Return -> return_(node.values.flatMap { it.get() })
             is Statement -> {
@@ -302,11 +350,16 @@ class Scope(
                 stack.add(res.first())
             }
             is UnaryNeg -> TODO("UnaryNeg")
-            is UnaryNot -> TODO("UnaryNot")
+            is UnaryNot -> {
+                val res = collectAsLuaScope {
+                    node.item.get().first()
+                }
+                stack.add(TBoolean.of(!res.first().asBool()))
+            }
             is UnnamedFunction -> {
                 val args = if (node.isVararg) node.namedArgs.size else 0
                 val func = TFunction {
-                    val newScope = Scope(this@Scope, TTable(), it.takeLast(args))
+                    val newScope = Scope(this@Scope, TTable(), it.drop(args))
                     for ((i, arg) in node.namedArgs.withIndex()) {
                         newScope.env[TString(arg)] = if (i in it.indices) it[i] else TNil
                     }

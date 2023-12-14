@@ -58,7 +58,18 @@ fun TTable.insertString() {
         TODO()
     }
     this["format"] = TFunction { args ->
-        TODO()
+        val format = args.argument(0, LuaType.STRING) as TString
+        var i = 0
+        val sb = StringBuilder()
+        while (i < format.value.length) {
+            val c = format.value[i++]
+            if (c == '%') {
+                error("string.format is not implemented in KLua")
+            } else {
+                sb.append(c)
+            }
+        }
+        return_(TString(sb.toString()))
     }
     this["gmatch"] = TFunction { args ->
         TODO()

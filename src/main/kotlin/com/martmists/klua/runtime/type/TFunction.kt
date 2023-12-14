@@ -20,6 +20,9 @@ class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
 
         var values = emptyList<TValue<*>>()
         while (true) {
+            if (name == "<unknown>") {
+                error("Attempt to call function with no name")
+            }
             val transformed = when (val res = coro.send(values)) {
                 is LuaStatus.Error -> {
                     // Add call to stacktrace
@@ -47,5 +50,7 @@ class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
                 if (value !is TTable && value !is TNil) throw LuaException("Table expected, got ${value.type.luaName}")
                 _metatable = if (value is TNil) null else value as TTable
             }
+
+        operator fun invoke(name: String, block: TFunctionType) = TFunction(block).also { it.name = name }
     }
 }

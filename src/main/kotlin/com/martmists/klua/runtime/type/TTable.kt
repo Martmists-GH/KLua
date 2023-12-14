@@ -1,12 +1,13 @@
 package com.martmists.klua.runtime.type
 
 import com.martmists.klua.runtime.LuaException
+import org.antlr.v4.misc.OrderedHashMap
 
-class TTable : TValue<Map<TValue<*>, TValue<*>>>() {
+class TTable : TValue<OrderedHashMap<TValue<*>, TValue<*>>>() {
     override val type = LuaType.TABLE
 
-    private val map = mutableMapOf<TValue<*>, TValue<*>>()
-    override val value: Map<TValue<*>, TValue<*>>
+    private val map = OrderedHashMap<TValue<*>, TValue<*>>()
+    override val value: OrderedHashMap<TValue<*>, TValue<*>>
         get() = map
 
     private var _metatable: TTable? = null
