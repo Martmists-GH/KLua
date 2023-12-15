@@ -10,6 +10,7 @@ import com.martmists.klua.runtime.type.TTable
 import com.martmists.klua.runtime.type.TValue
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
+import java.io.InputStream
 
 class LuaInterpreter {
     private val root = Scope()
@@ -18,13 +19,13 @@ class LuaInterpreter {
         root.env.insertBasic()
     }
 
-    suspend fun execute(code: String, beforeExecute: (env: TTable) -> Unit = {}): List<TValue<*>> {
-        val stream = CharStreams.fromString(code)
+    suspend fun execute(filename: String, source: String, beforeExecute: (env: TTable) -> Unit = {}): List<TValue<*>> {
+        val stream = CharStreams.fromString(source)
         val lexer = LuaLexer(stream)
         val tokens = CommonTokenStream(lexer)
         val parser = LuaParser(tokens)
         val ast = parser.start_()
-        val node = ASTTransformer(code).transform(ast)
+        val node = ASTTransformer(source, filename).transform(ast)
 
 //        println(node)
 
@@ -44,6 +45,14 @@ class LuaInterpreter {
                 }
             }
         }
+    }
+
+    suspend fun execute(file: java.io.File, beforeExecute: (env: TTable) -> Unit = {}): List<TValue<*>> {
+        return execute(file.name, file.readText(), beforeExecute)
+    }
+
+    suspend fun execute(code: String, beforeExecute: (env: TTable) -> Unit = {}): List<TValue<*>> {
+        return execute("<string>", code, beforeExecute)
     }
 
     private fun reportError(error: LuaStatus.Error): Nothing {

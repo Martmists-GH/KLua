@@ -3,28 +3,25 @@ package com.martmists.klua.runtime.operator
 import com.martmists.klua.runtime.type.*
 import com.martmists.klua.runtime.async.LuaCoroutineScope
 context(LuaCoroutineScope)
-suspend fun TValue<*>.luaSub(other: TValue<*>) {
+suspend fun TValue<*>.luaIDiv(other: TValue<*>) {
     if (this is TNumber<*> && other is TNumber<*>) {
-        if (this is TDouble || other is TDouble) {
-            return_(TDouble(this.value.toDouble() - other.value.toDouble()))
-        } else {
-            return_(TLong(this.value.toLong() - other.value.toLong()))
-        }
+        val res = (this.value.toDouble() / other.value.toDouble()).toLong()
+        return_(TLong(res))
     }
 
     var meta = this.metatable
     if (meta is TTable) {
-        val subMeta = meta["__sub"]
-        if (subMeta !is TNil) {
-            subMeta.luaCall(listOf(this, other))
+        val idivMeta = meta["__idiv"]
+        if (idivMeta !is TNil) {
+            idivMeta.luaCall(listOf(this, other))
             return
         }
     }
     meta = other.metatable
     if (meta is TTable) {
-        val subMeta = meta["__sub"]
-        if (subMeta !is TNil) {
-            subMeta.luaCall(listOf(this, other))
+        val idivMeta = meta["__idiv"]
+        if (idivMeta !is TNil) {
+            idivMeta.luaCall(listOf(this, other))
             return
         }
     }

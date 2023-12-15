@@ -36,4 +36,5 @@ suspend fun TValue<*>.luaPow(other: TValue<*>) {
         error("attempt to perform arithmetic on a ${other.type.luaName} value")
     } else {
         error("attempt to perform arithmetic on a ${type.luaName} value")
-    }}
+    }
+}
