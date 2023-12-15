@@ -121,8 +121,7 @@ class LuaTests {
                         print(counter)
                     end
                     test()
-                """.trimIndent()
-                    // function test() counter = 0 ::loop:: counter = counter + 1 if counter < 10 then goto loop end print(counter) end test()
+                    """.trimIndent()
                 )
             }
         }
