@@ -22,7 +22,7 @@ suspend fun main(args: Array<String>) {
                 interpreter.execute("<input>", line)
             } catch (e: Exception) {
                 // TODO: In intellij, print to stdout with colors instead
-                if (false) {
+                if (true) {
                     println("\u001B[31mError: ${e.message}\u001B[0m")
                 } else {
                     System.err.println("Error: ${e.message}")

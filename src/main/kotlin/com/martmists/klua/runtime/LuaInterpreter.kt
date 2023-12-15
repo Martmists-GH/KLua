@@ -37,6 +37,7 @@ class LuaInterpreter {
             is LuaStatus.Error -> reportError(res)
             is LuaStatus.Yield -> reportError(LuaStatus.Error("yield outside coroutine", res.stackTrace))
             is LuaStatus.Return -> res.values
+            is LuaStatus.Goto -> reportError(LuaStatus.Error("no visible label '${res.label}' for <goto>", res.stackTrace))
             is LuaStatus.StopIteration -> {
                 if (res.isBreak) {
                     reportError(LuaStatus.Error("break outside loop", res.stackTrace))

@@ -57,6 +57,7 @@ class Scope(
                         if (node.local) {
                             env[key] = values.removeFirst()
                         } else {
+                            // TODO: Iterate over all scopes and assign to first one that has the key
                             collectAsLuaScope {
                                 root.env.luaNewIndex(key, values.removeFirst())
                             }
@@ -162,7 +163,7 @@ class Scope(
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
                 val res = collectAsLuaScope {
-                    rhs.luaLe(lhs)
+                    lhs.luaLe(rhs)
                 }
                 stack.add(TBoolean.of(!res.first().asBool()))
             }
@@ -178,7 +179,7 @@ class Scope(
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
                 val res = collectAsLuaScope {
-                    rhs.luaLe(lhs)
+                    lhs.luaLe(rhs)
                 }
                 stack.add(TBoolean.of(res.first().asBool()))
             }
@@ -186,7 +187,7 @@ class Scope(
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
                 val res = collectAsLuaScope {
-                    rhs.luaLt(lhs)
+                    lhs.luaLt(rhs)
                 }
                 stack.add(TBoolean.of(res.first().asBool()))
             }
@@ -240,9 +241,47 @@ class Scope(
                 stack.add(res.first())
             }
             is Block -> {
-                val newScope = Scope(this, varargs=varargs)
-                for (statement in node.statements) {
-                    newScope.evaluate(statement)
+                val labels = mutableMapOf<String, Int>()
+                for ((i, statement) in node.statements.withIndex()) {
+                    var stmt = statement
+                    while (stmt is ASTNode.Sourced<*> || stmt is Statement) {
+                        if (stmt is ASTNode.Sourced<*>) {
+                            stmt = stmt.node
+                        } else if (stmt is Statement) {
+                            stmt = stmt.node
+                        }
+                    }
+                    if (stmt is Label) {
+                        labels[stmt.value] = i
+                    }
+                }
+                val newScope = Scope(this, env, varargs=varargs)
+                var i = 0
+                outer@while (i < node.statements.size) {
+                    val statement = node.statements[i++]
+                    val luaScope = createLuaScope {
+                        newScope.evaluate(statement)
+                    }
+//                    println(newScope.loadVar("counter"))
+                    var values = emptyList<TValue<*>>()
+                    inner@while (true) {
+                        val res = luaScope.trySend(values)
+                        if (res is LuaStatus.Goto) {
+                            val label = labels[res.label]
+                            if (label != null) {
+                                i = label
+                                break@inner
+                            }
+                        }
+                        if (res != null) {
+                            values = emit(res)
+                            if (res !is LuaStatus.Yield) {
+                                break@outer
+                            }
+                        } else {
+                            break@inner
+                        }
+                    }
                 }
             }
             Break -> break_()
@@ -272,6 +311,9 @@ class Scope(
                         }
                         is LuaStatus.Yield -> {
                             values = emit(res)
+                        }
+                        is LuaStatus.Goto -> {
+                            error("no visible label '${res.label}' for <goto>")
                         }
                         is LuaStatus.Error, is LuaStatus.StopIteration -> {
                             emit(res)
@@ -326,7 +368,9 @@ class Scope(
                     }
                 }
             }
-            is Goto -> TODO("Goto")
+            is Goto -> {
+                goto(node.value)
+            }
             is IfElseBlock -> {
                 val cond = node.condition.get().first()
                 if (cond.asBool()) {
@@ -335,7 +379,9 @@ class Scope(
                     evaluate(node.elseBlock)
                 }
             }
-            is Label -> TODO("Label")
+            is Label -> {
+                // No-op
+            }
             is LoadAttribute -> {
                 val owner = node.owner.get().first()
                 val res = collectAsLuaScope {
@@ -363,7 +409,36 @@ class Scope(
             PushVarargs -> {
                 stack.addAll(varargs.asReversed())
             }
-            is RepeatUntilLoop -> TODO("RepeatUntilLoop")
+            is RepeatUntilLoop -> {
+                outer@while (true) {
+                    val scope = createLuaScope {
+                        evaluate(node.block)
+                    }
+                    var values = emptyList<TValue<*>>()
+                    inner@while (true) {
+                        val res = scope.trySend(values)
+                        if (res is LuaStatus.StopIteration) {
+                            if (res.isBreak) {
+                                break@outer
+                            } else {
+                                continue@outer
+                            }
+                        }
+                        if (res != null) {
+                            values = emit(res)
+                            if (res !is LuaStatus.Yield) {
+                                break@outer
+                            }
+                        } else {
+                            break@inner
+                        }
+                    }
+                    val cond = node.condition.get().first()
+                    if (cond.asBool()) {
+                        break
+                    }
+                }
+            }
             is Return -> return_(node.values.flatMap { it.get() })
             is Statement -> {
                 evaluate(node.node)
@@ -452,6 +527,14 @@ class Scope(
 
                     val transformed = when (res) {
                         is LuaStatus.Error -> {
+                            // Add source to stack trace
+                            if (res.stackTrace.last().source == null) {
+                                res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))
+                            } else {
+                                res
+                            }
+                        }
+                        is LuaStatus.Goto -> {
                             // Add source to stack trace
                             if (res.stackTrace.last().source == null) {
                                 res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))

@@ -88,6 +88,16 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
         throw IllegalStateException("Unreachable")
     }
 
+    override suspend fun goto(label: String): Nothing {
+        nextValue = LuaStatus.Goto(label, listOf(StackFrame(null, null)))
+        state = State.SUSPENDED
+        suspendCoroutine { c ->
+            nextStep = c
+            COROUTINE_SUSPENDED
+        }
+        throw IllegalStateException("Unreachable")
+    }
+
     override suspend fun error(message: String): Nothing {
         nextValue = LuaStatus.Error(message, listOf(StackFrame(null, null)))
         state = State.SUSPENDED
@@ -101,7 +111,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     override suspend fun emit(status: LuaStatus): List<TValue<*>> {
         nextValue = status
         state = when (status) {
-            is LuaStatus.Error, is LuaStatus.Return, is LuaStatus.StopIteration -> State.SUSPENDED
+            is LuaStatus.Error, is LuaStatus.Return, is LuaStatus.StopIteration, is LuaStatus.Goto -> State.SUSPENDED
             is LuaStatus.Yield -> State.READY
         }
         return suspendCoroutine { c ->

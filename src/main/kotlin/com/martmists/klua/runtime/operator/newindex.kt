@@ -10,7 +10,7 @@ suspend fun TValue<*>.luaNewIndex(key: TValue<*>, value: TValue<*>) {
     if (this is TTable) {
         val existingValue = this[key]
         if (existingValue !is TNil) {
-            this[key] = existingValue
+            this[key] = value
             return_()
         }
     }

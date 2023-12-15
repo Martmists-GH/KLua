@@ -32,6 +32,11 @@ class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
                     // Add call to stacktrace
                     res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(name, res.stackTrace.last().source) + StackFrame(null, null))
                 }
+                is LuaStatus.Goto -> {
+                    println("goto - TFunction")
+                    // Add call to stacktrace
+                    LuaStatus.Error("no visible label '${res.label}' for <goto>", res.stackTrace.dropLast(1) + StackFrame(name, res.stackTrace.last().source) + StackFrame(null, null))
+                }
                 is LuaStatus.Return -> res
                 is LuaStatus.StopIteration -> {
                     // Add call to stacktrace

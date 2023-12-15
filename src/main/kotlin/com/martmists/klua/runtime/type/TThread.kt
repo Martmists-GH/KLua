@@ -1,5 +1,6 @@
 package com.martmists.klua.runtime.type
 
+import com.martmists.klua.meta.StackFrame
 import com.martmists.klua.runtime.LuaException
 import com.martmists.klua.runtime.LuaStatus
 import com.martmists.klua.runtime.async.LuaCoroutineCommunication
@@ -40,6 +41,7 @@ class TThread(private val func: TValue<*>) : TValue<Unit>() {
             is LuaStatus.Error -> return_(TBoolean.FALSE, TString(res.error))
             is LuaStatus.Return -> return_(listOf(TBoolean.TRUE) + res.values)
             is LuaStatus.StopIteration -> emit(res)
+            is LuaStatus.Goto -> error("No visible label '${res.label}' for <goto>")
             is LuaStatus.Yield -> return_(listOf(TBoolean.TRUE) + res.values)
         }
     }

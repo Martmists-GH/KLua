@@ -16,10 +16,18 @@ suspend fun collectAsLuaScope(block: suspend LuaCoroutineScope.() -> Unit): List
     var items = emptyList<TValue<*>>()
     while (true) {
         val res = scope.send(items)
-        if (res is LuaStatus.Return) {
-            return res.values
-        } else {
-            items = emit(res)
+        when (res) {
+            is LuaStatus.Return -> {
+                return res.values
+            }
+
+            is LuaStatus.Goto -> {
+                error("No visible label '${res.label}' for <goto>")
+            }
+
+            else -> {
+                items = emit(res)
+            }
         }
     }
 }

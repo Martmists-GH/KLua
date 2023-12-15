@@ -13,6 +13,7 @@ sealed interface LuaStatus {
     }
     data class Yield(val values: List<TValue<*>>, override val stackTrace: List<StackFrame>) : LuaStatus
     data class StopIteration(val isBreak: Boolean, override val stackTrace: List<StackFrame>) : LuaStatus
+    data class Goto(val label: String, override val stackTrace: List<StackFrame>) : LuaStatus
 
     companion object {
         operator fun invoke(vararg values: TValue<*>) = Return(values.toList())

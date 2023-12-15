@@ -93,4 +93,29 @@ class LuaTests {
         }
         assertEquals("15$eol", output)
     }
+
+    @Test
+    fun Goto() {
+        val engine = LuaInterpreter()
+        val output = captureStdout {
+            runBlocking {
+                engine.execute(
+                    """
+                    function test()
+                        counter = 0
+                        ::loop::
+                        counter = counter + 1
+                        if counter < 10 then
+                            goto loop
+                        end
+                        print(counter)
+                    end
+                    test()
+                """.trimIndent()
+                    // function test() counter = 0 ::loop:: counter = counter + 1 if counter < 10 then goto loop end print(counter) end test()
+                )
+            }
+        }
+        assertEquals("10$eol", output)
+    }
 }
