@@ -1,6 +1,5 @@
 package com.martmists.klua.runtime.type
 
-import com.martmists.klua.meta.StackFrame
 import com.martmists.klua.runtime.LuaException
 import com.martmists.klua.runtime.LuaStatus
 import com.martmists.klua.runtime.async.LuaCoroutineCommunication

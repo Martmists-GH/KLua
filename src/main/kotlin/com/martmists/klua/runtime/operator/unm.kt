@@ -1,7 +1,8 @@
 package com.martmists.klua.runtime.operator
 
-import com.martmists.klua.runtime.type.*
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.type.*
+
 context(LuaCoroutineScope)
 suspend fun TValue<*>.luaUnm() {
     if (this is TLong) {

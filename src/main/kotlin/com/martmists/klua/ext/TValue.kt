@@ -1,10 +1,10 @@
 package com.martmists.klua.ext
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.type.LuaType
 import com.martmists.klua.runtime.type.TBoolean
 import com.martmists.klua.runtime.type.TNil
 import com.martmists.klua.runtime.type.TValue
-import com.martmists.klua.runtime.type.LuaType
 
 fun TValue<*>.asBool() = when (this) {
     is TBoolean -> this.value

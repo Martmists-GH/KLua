@@ -37,13 +37,13 @@ interface LuaParserListener : ParseTreeListener {
      * Enter a parse tree produced by [LuaParser.block].
      * @param ctx the parse tree
      */
-    fun enterBlock(ctx: LuaParser.BlockContext?)
+    fun enterBlock(ctx: BlockContext?)
 
     /**
      * Exit a parse tree produced by [LuaParser.block].
      * @param ctx the parse tree
      */
-    fun exitBlock(ctx: LuaParser.BlockContext?)
+    fun exitBlock(ctx: BlockContext?)
 
     /**
      * Enter a parse tree produced by [LuaParser.stat].
@@ -97,13 +97,13 @@ interface LuaParserListener : ParseTreeListener {
      * Enter a parse tree produced by [LuaParser.label].
      * @param ctx the parse tree
      */
-    fun enterLabel(ctx: LuaParser.LabelContext?)
+    fun enterLabel(ctx: LabelContext?)
 
     /**
      * Exit a parse tree produced by [LuaParser.label].
      * @param ctx the parse tree
      */
-    fun exitLabel(ctx: LuaParser.LabelContext?)
+    fun exitLabel(ctx: LabelContext?)
 
     /**
      * Enter a parse tree produced by [LuaParser.funcname].
@@ -313,11 +313,11 @@ interface LuaParserListener : ParseTreeListener {
      * Enter a parse tree produced by [LuaParser.string].
      * @param ctx the parse tree
      */
-    fun enterString(ctx: LuaParser.StringContext?)
+    fun enterString(ctx: StringContext?)
 
     /**
      * Exit a parse tree produced by [LuaParser.string].
      * @param ctx the parse tree
      */
-    fun exitString(ctx: LuaParser.StringContext?)
+    fun exitString(ctx: StringContext?)
 }

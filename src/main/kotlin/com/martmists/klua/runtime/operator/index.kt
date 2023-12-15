@@ -1,7 +1,10 @@
 package com.martmists.klua.runtime.operator
 
-import com.martmists.klua.runtime.type.*
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.type.TNil
+import com.martmists.klua.runtime.type.TTable
+import com.martmists.klua.runtime.type.TValue
+
 context(LuaCoroutineScope)
 suspend fun TValue<*>.luaIndex(other: TValue<*>) {
     if (this is TTable) {

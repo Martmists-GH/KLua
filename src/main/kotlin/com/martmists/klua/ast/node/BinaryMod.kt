@@ -1,3 +1,3 @@
 package com.martmists.klua.ast.node
 
-data class BinaryMod(val left: ASTNode, val right: ASTNode): ASTNode
+data class BinaryMod(val left: ASTNode, val right: ASTNode) : ASTNode

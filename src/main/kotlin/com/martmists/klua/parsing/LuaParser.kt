@@ -10,7 +10,8 @@ import org.antlr.v4.runtime.dfa.DFA
 import org.antlr.v4.runtime.tree.ParseTreeListener
 import org.antlr.v4.runtime.tree.TerminalNode
 
-@Suppress("unused", "DEPRECATION", "FunctionName", "UNUSED_PARAMETER", "LocalVariableName", "ProtectedInFinal",
+@Suppress(
+    "unused", "DEPRECATION", "FunctionName", "UNUSED_PARAMETER", "LocalVariableName", "ProtectedInFinal",
     "ObjectPropertyName", "SpellCheckingInspection", "JoinDeclarationAndAssignment", "ConstPropertyName",
     "DeprecatedCallableAddReplaceWith", "SameParameterValue", "ClassName"
 )

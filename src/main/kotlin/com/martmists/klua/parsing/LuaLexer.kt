@@ -8,7 +8,8 @@ import org.antlr.v4.runtime.atn.LexerATNSimulator
 import org.antlr.v4.runtime.atn.PredictionContextCache
 import org.antlr.v4.runtime.dfa.DFA
 
-@Suppress("unused", "DEPRECATION", "FunctionName", "UNUSED_PARAMETER", "LocalVariableName", "ProtectedInFinal",
+@Suppress(
+    "unused", "DEPRECATION", "FunctionName", "UNUSED_PARAMETER", "LocalVariableName", "ProtectedInFinal",
     "ObjectPropertyName", "SpellCheckingInspection", "JoinDeclarationAndAssignment", "ConstPropertyName",
     "DeprecatedCallableAddReplaceWith"
 )

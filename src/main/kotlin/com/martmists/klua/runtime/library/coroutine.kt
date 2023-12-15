@@ -1,8 +1,6 @@
 package com.martmists.klua.runtime.library
 
 import com.martmists.klua.ext.argument
-import com.martmists.klua.runtime.async.createLuaScope
-import com.martmists.klua.runtime.operator.luaCall
 import com.martmists.klua.runtime.type.LuaType
 import com.martmists.klua.runtime.type.TFunction
 import com.martmists.klua.runtime.type.TTable

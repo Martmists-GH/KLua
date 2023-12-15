@@ -5,8 +5,9 @@ print('testing scanner')
 
 local debug = require "debug"
 
-
-local function dostring (x) return assert(load(x), "")() end
+local function dostring (x)
+    return assert(load(x), "")()
+end
 
 dostring("x \v\f = \t\r 'a\0a' \v\f\f")
 assert(x == 'a\0a' and string.len(x) == 3)
@@ -32,15 +33,15 @@ assert(010 .. 020 .. -030 == "1020-30")
 assert("\x00\x05\x10\x1f\x3C\xfF\xe8" == "\0\5\16\31\60\255\232")
 
 local function lexstring (x, y, n)
-  local f = assert(load('return ' .. x ..
+    local f = assert(load('return ' .. x ..
             ', require"debug".getinfo(1).currentline', ''))
-  local s, l = f()
-  assert(s == y and l == n)
+    local s, l = f()
+    assert(s == y and l == n)
 end
 
 lexstring("'abc\\z  \n   efg'", "abcefg", 2)
 lexstring("'abc\\z  \n\n\n'", "abc", 4)
-lexstring("'\\z  \n\t\f\v\n'",  "", 3)
+lexstring("'\\z  \n\t\f\v\n'", "", 3)
 lexstring("[[\nalo\nalo\n\n]]", "alo\nalo\n\n", 5)
 lexstring("[[\nalo\ralo\n\n]]", "alo\nalo\n\n", 5)
 lexstring("[[\nalo\ralo\r\n]]", "alo\nalo\n", 4)
@@ -63,7 +64,7 @@ assert("\u{0}\u{7F}" == "\x00\x7F")
 assert("\u{80}\u{7FF}" == "\xC2\x80\xDF\xBF")
 
 -- limits for 3-byte sequences
-assert("\u{800}\u{FFFF}" ==   "\xE0\xA0\x80\xEF\xBF\xBF")
+assert("\u{800}\u{FFFF}" == "\xE0\xA0\x80\xEF\xBF\xBF")
 
 -- limits for 4-byte sequences
 assert("\u{10000}\u{1FFFFF}" == "\xF0\x90\x80\x80\xF7\xBF\xBF\xBF")
@@ -73,14 +74,16 @@ assert("\u{200000}\u{3FFFFFF}" == "\xF8\x88\x80\x80\x80\xFB\xBF\xBF\xBF\xBF")
 
 -- limits for 6-byte sequences
 assert("\u{4000000}\u{7FFFFFFF}" ==
-       "\xFC\x84\x80\x80\x80\x80\xFD\xBF\xBF\xBF\xBF\xBF")
+        "\xFC\x84\x80\x80\x80\x80\xFD\xBF\xBF\xBF\xBF\xBF")
 
 
 -- Error in escape sequences
 local function lexerror (s, err)
-  local st, msg = load('return ' .. s, '')
-  if err ~= '<eof>' then err = err .. "'" end
-  assert(not st and string.find(msg, "near .-" .. err))
+    local st, msg = load('return ' .. s, '')
+    if err ~= '<eof>' then
+        err = err .. "'"
+    end
+    assert(not st and string.find(msg, "near .-" .. err))
 end
 
 lexerror([["abc\x"]], [[\x"]])
@@ -121,10 +124,10 @@ lexerror([['alo \98]], "<eof>")
 
 -- valid characters in variable names
 for i = 0, 255 do
-  local s = string.char(i)
-  assert(not string.find(s, "[a-zA-Z_]") == not load(s .. "=1", ""))
-  assert(not string.find(s, "[a-zA-Z_0-9]") ==
-         not load("a" .. s .. "1 = 1", ""))
+    local s = string.char(i)
+    assert(not string.find(s, "[a-zA-Z_]") == not load(s .. "=1", ""))
+    assert(not string.find(s, "[a-zA-Z_0-9]") ==
+            not load("a" .. s .. "1 = 1", ""))
 end
 
 
@@ -206,29 +209,34 @@ dostring(prog)
 assert(x)
 _G.x = nil
 
+do
+    -- reuse of long strings
 
+    -- get the address of a string
+    local function getadd (s)
+        return string.format("%p", s)
+    end
 
-do  -- reuse of long strings
+    local s1 <const> = "01234567890123456789012345678901234567890123456789"
+    local s2 <const> = "01234567890123456789012345678901234567890123456789"
+    local s3 = "01234567890123456789012345678901234567890123456789"
+    local function foo()
+        return s1
+    end
+    local function foo1()
+        return s3
+    end
+    local function foo2()
+        return "01234567890123456789012345678901234567890123456789"
+    end
+    local a1 = getadd(s1)
+    assert(a1 == getadd(s2))
+    assert(a1 == getadd(foo()))
+    assert(a1 == getadd(foo1()))
+    assert(a1 == getadd(foo2()))
 
-  -- get the address of a string
-  local function getadd (s) return string.format("%p", s) end
-
-  local s1 <const> = "01234567890123456789012345678901234567890123456789"
-  local s2 <const> = "01234567890123456789012345678901234567890123456789"
-  local s3 = "01234567890123456789012345678901234567890123456789"
-  local function foo() return s1 end
-  local function foo1() return s3 end
-  local function foo2()
-    return "01234567890123456789012345678901234567890123456789"
-  end
-  local a1 = getadd(s1)
-  assert(a1 == getadd(s2))
-  assert(a1 == getadd(foo()))
-  assert(a1 == getadd(foo1()))
-  assert(a1 == getadd(foo2()))
-
-  local sd = "0123456789" .. "0123456789012345678901234567890123456789"
-  assert(sd == s1 and getadd(sd) ~= a1)
+    local sd = "0123456789" .. "0123456789012345678901234567890123456789"
+    assert(sd == s1 and getadd(sd) ~= a1)
 end
 
 
@@ -247,10 +255,10 @@ hello\r\n\
 return require"debug".getinfo(1).currentline
 ]]
 
-for _, n in pairs{"\n", "\r", "\n\r", "\r\n"} do
-  local prog, nn = string.gsub(prog, "\n", n)
-  assert(dostring(prog) == nn)
-  assert(_G.x == "hi\n" and _G.y == "\nhello\r\n\n")
+for _, n in pairs { "\n", "\r", "\n\r", "\r\n" } do
+    local prog, nn = string.gsub(prog, "\n", n)
+    assert(dostring(prog) == nn)
+    assert(_G.x == "hi\n" and _G.y == "\nhello\r\n\n")
 end
 _G.x, _G.y = nil
 
@@ -277,46 +285,49 @@ x y z [==[ blu foo
 error error]=]===]
 
 -- generate all strings of four of these chars
-local x = {"=", "[", "]", "\n"}
+local x = { "=", "[", "]", "\n" }
 local len = 4
 local function gen (c, n)
-  if n==0 then coroutine.yield(c)
-  else
-    for _, a in pairs(x) do
-      gen(c..a, n-1)
+    if n == 0 then
+        coroutine.yield(c)
+    else
+        for _, a in pairs(x) do
+            gen(c .. a, n - 1)
+        end
     end
-  end
 end
 
-for s in coroutine.wrap(function () gen("", len) end) do
-  assert(s == load("return [====[\n"..s.."]====]", "")())
+for s in coroutine.wrap(function()
+    gen("", len)
+end) do
+    assert(s == load("return [====[\n" .. s .. "]====]", "")())
 end
 
 
 -- testing decimal point locale
 if os.setlocale("pt_BR") or os.setlocale("ptb") then
-  assert(tonumber("3,4") == 3.4 and tonumber"3.4" == 3.4)
-  assert(tonumber("  -.4  ") == -0.4)
-  assert(tonumber("  +0x.41  ") == 0X0.41)
-  assert(not load("a = (3,4)"))
-  assert(assert(load("return 3.4"))() == 3.4)
-  assert(assert(load("return .4,3"))() == .4)
-  assert(assert(load("return 4."))() == 4.)
-  assert(assert(load("return 4.+.5"))() == 4.5)
+    assert(tonumber("3,4") == 3.4 and tonumber "3.4" == 3.4)
+    assert(tonumber("  -.4  ") == -0.4)
+    assert(tonumber("  +0x.41  ") == 0X0.41)
+    assert(not load("a = (3,4)"))
+    assert(assert(load("return 3.4"))() == 3.4)
+    assert(assert(load("return .4,3"))() == .4)
+    assert(assert(load("return 4."))() == 4.)
+    assert(assert(load("return 4.+.5"))() == 4.5)
 
-  assert(" 0x.1 " + " 0x,1" + "-0X.1\t" == 0x0.1)
+    assert(" 0x.1 " + " 0x,1" + "-0X.1\t" == 0x0.1)
 
-  assert(not tonumber"inf" and not tonumber"NAN")
+    assert(not tonumber "inf" and not tonumber "NAN")
 
-  assert(assert(load(string.format("return %q", 4.51)))() == 4.51)
+    assert(assert(load(string.format("return %q", 4.51)))() == 4.51)
 
-  local a,b = load("return 4.5.")
-  assert(string.find(b, "'4%.5%.'"))
+    local a, b = load("return 4.5.")
+    assert(string.find(b, "'4%.5%.'"))
 
-  assert(os.setlocale("C"))
+    assert(os.setlocale("C"))
 else
-  (Message or print)(
-   '\n >>> pt_BR locale not available: skipping decimal point tests <<<\n')
+    (Message or print)(
+            '\n >>> pt_BR locale not available: skipping decimal point tests <<<\n')
 end
 
 
@@ -326,14 +337,14 @@ local c = string.format("return %q", s)
 assert(assert(load(c))() == s)
 
 -- testing errors
-assert(not load"a = 'non-ending string")
-assert(not load"a = 'non-ending string\n'")
-assert(not load"a = '\\345'")
-assert(not load"a = [=x]")
+assert(not load "a = 'non-ending string")
+assert(not load "a = 'non-ending string\n'")
+assert(not load "a = '\\345'")
+assert(not load "a = [=x]")
 
 local function malformednum (n, exp)
-  local s, msg = load("return " .. n)
-  assert(not s and string.find(msg, exp))
+    local s, msg = load("return " .. n)
+    assert(not s and string.find(msg, exp))
 end
 
 malformednum("0xe-", "near <eof>")

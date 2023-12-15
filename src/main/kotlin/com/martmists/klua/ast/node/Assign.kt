@@ -11,9 +11,11 @@ data class Assign(
     )
 
     companion object {
-        operator fun invoke(targets: List<ASTNode>,
-                            values: List<ASTNode>,
-                            local: Boolean): Assign {
+        operator fun invoke(
+            targets: List<ASTNode>,
+            values: List<ASTNode>,
+            local: Boolean
+        ): Assign {
             val mapped = targets.map {
                 var target = it
                 while (target is ASTNode.Sourced<*>) {

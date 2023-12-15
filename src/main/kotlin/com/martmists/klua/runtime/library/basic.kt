@@ -75,7 +75,8 @@ fun TTable.insertBasic() {
             }
             val key = invariant.value.getKey(keyIdx) ?: return_(TNil)
             val value = invariant.value[key] ?: return_(TNil)
-            return_(key, value)        }
+            return_(key, value)
+        }
         this["next"] = next
 
         this["pairs"] = TFunction { args ->

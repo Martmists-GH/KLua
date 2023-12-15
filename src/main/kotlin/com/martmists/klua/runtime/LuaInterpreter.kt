@@ -10,7 +10,6 @@ import com.martmists.klua.runtime.type.TTable
 import com.martmists.klua.runtime.type.TValue
 import org.antlr.v4.runtime.CharStreams
 import org.antlr.v4.runtime.CommonTokenStream
-import java.io.InputStream
 
 class LuaInterpreter {
     private val root = Scope()
@@ -37,7 +36,13 @@ class LuaInterpreter {
             is LuaStatus.Error -> reportError(res)
             is LuaStatus.Yield -> reportError(LuaStatus.Error("yield outside coroutine", res.stackTrace))
             is LuaStatus.Return -> res.values
-            is LuaStatus.Goto -> reportError(LuaStatus.Error("no visible label '${res.label}' for <goto>", res.stackTrace))
+            is LuaStatus.Goto -> reportError(
+                LuaStatus.Error(
+                    "no visible label '${res.label}' for <goto>",
+                    res.stackTrace
+                )
+            )
+
             is LuaStatus.StopIteration -> {
                 if (res.isBreak) {
                     reportError(LuaStatus.Error("break outside loop", res.stackTrace))

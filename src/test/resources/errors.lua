@@ -3,7 +3,7 @@
 
 print("testing errors")
 
-local debug = require"debug"
+local debug = require "debug"
 
 -- avoid problems with 'strict' module (which may generate other error messages)
 local mt = getmetatable(_G) or {}
@@ -11,34 +11,38 @@ local oldmm = mt.__index
 mt.__index = nil
 
 local function checkerr (msg, f, ...)
-  local st, err = pcall(f, ...)
-  assert(not st and string.find(err, msg))
+    local st, err = pcall(f, ...)
+    assert(not st and string.find(err, msg))
 end
-
 
 local function doit (s)
-  local f, msg = load(s)
-  if not f then return msg end
-  local cond, msg = pcall(f)
-  return (not cond) and msg
+    local f, msg = load(s)
+    if not f then
+        return msg
+    end
+    local cond, msg = pcall(f)
+    return (not cond) and msg
 end
 
-
 local function checkmessage (prog, msg, debug)
-  local m = doit(prog)
-  if debug then print(m, msg) end
-  assert(string.find(m, msg, 1, true))
+    local m = doit(prog)
+    if debug then
+        print(m, msg)
+    end
+    assert(string.find(m, msg, 1, true))
 end
 
 local function checksyntax (prog, extra, token, line)
-  local msg = doit(prog)
-  if not string.find(token, "^<%a") and not string.find(token, "^char%(")
-    then token = "'"..token.."'" end
-  token = string.gsub(token, "(%p)", "%%%1")
-  local pt = string.format([[^%%[string ".*"%%]:%d: .- near %s$]],
-                           line, token)
-  assert(string.find(msg, pt))
-  assert(string.find(msg, msg, 1, true))
+    local msg = doit(prog)
+    if not string.find(token, "^<%a") and not string.find(token, "^char%(")
+    then
+        token = "'" .. token .. "'"
+    end
+    token = string.gsub(token, "(%p)", "%%%1")
+    local pt = string.format([[^%%[string ".*"%%]:%d: .- near %s$]],
+            line, token)
+    assert(string.find(msg, pt))
+    assert(string.find(msg, msg, 1, true))
 end
 
 
@@ -53,11 +57,11 @@ assert(doit("error()") == nil)
 assert(doit("table.unpack({}, 1, n=2^30)"))
 assert(doit("a=math.sin()"))
 assert(not doit("tostring(1)") and doit("tostring()"))
-assert(doit"tonumber()")
-assert(doit"repeat until 1; a")
-assert(doit"return;;")
-assert(doit"assert(false)")
-assert(doit"assert(nil)")
+assert(doit "tonumber()")
+assert(doit "repeat until 1; a")
+assert(doit "return;;")
+assert(doit "assert(false)")
+assert(doit "assert(nil)")
 assert(doit("function a (... , ...) end"))
 assert(doit("function a (, ...) end"))
 assert(doit("local t={}; t = t[#t] + 1"))
@@ -67,20 +71,20 @@ checksyntax([[
 
 ]], "'}' expected (to close '{' at line 1)", "<eof>", 3)
 
+do
+    -- testing errors in goto/break
+    local function checksyntax (prog, msg, line)
+        local st, err = load(prog)
+        assert(string.find(err, "line " .. line))
+        assert(string.find(err, msg, 1, true))
+    end
 
-do   -- testing errors in goto/break
-  local function checksyntax (prog, msg, line)
-    local st, err = load(prog)
-    assert(string.find(err, "line " .. line))
-    assert(string.find(err, msg, 1, true))
-  end
-
-  checksyntax([[
+    checksyntax([[
     ::A:: a = 1
     ::A::
   ]], "label 'A' already defined", 1)
 
-  checksyntax([[
+    checksyntax([[
     a = 1
     goto A
     do ::A:: end
@@ -88,22 +92,24 @@ do   -- testing errors in goto/break
 
 end
 
-
 if not T then
-  (Message or print)
-    ('\n >>> testC not active: skipping memory message test <<<\n')
+    (Message or print)('\n >>> testC not active: skipping memory message test <<<\n')
 else
-  print "testing memory error message"
-  local a = {}
-  for i = 1, 10000 do a[i] = true end   -- preallocate array
-  collectgarbage()
-  T.totalmem(T.totalmem() + 10000)
-  -- force a memory error (by a small margin)
-  local st, msg = pcall(function()
-    for i = 1, 100000 do a[i] = tostring(i) end
-  end)
-  T.totalmem(0)
-  assert(not st and msg == "not enough" .. " memory")
+    print "testing memory error message"
+    local a = {}
+    for i = 1, 10000 do
+        a[i] = true
+    end   -- preallocate array
+    collectgarbage()
+    T.totalmem(T.totalmem() + 10000)
+    -- force a memory error (by a small margin)
+    local st, msg = pcall(function()
+        for i = 1, 100000 do
+            a[i] = tostring(i)
+        end
+    end)
+    T.totalmem(0)
+    assert(not st and msg == "not enough" .. " memory")
 end
 
 
@@ -117,7 +123,7 @@ checkmessage("a = {} <= 1", "attempt to compare")
 checkmessage("aaa=1; bbbb=2; aaa=math.sin(3)+bbbb(3)", "global 'bbbb'")
 checkmessage("aaa={}; do local aaa=1 end aaa:bbbb(3)", "method 'bbbb'")
 checkmessage("local a={}; a.bbbb(3)", "field 'bbbb'")
-assert(not string.find(doit"aaa={13}; local bbbb=1; aaa[bbbb](3)", "'bbbb'"))
+assert(not string.find(doit "aaa={13}; local bbbb=1; aaa[bbbb](3)", "'bbbb'"))
 checkmessage("aaa={13}; local bbbb=1; aaa[bbbb](3)", "number")
 checkmessage("aaa=(1)..{}", "a table value")
 
@@ -147,7 +153,7 @@ checkmessage("aaa.bbb:ddd(9)", "global 'aaa'")
 checkmessage("local aaa={bbb=1}; aaa.bbb:ddd(9)", "field 'bbb'")
 checkmessage("local aaa={bbb={}}; aaa.bbb:ddd(9)", "method 'ddd'")
 checkmessage("local a,b,c; (function () a = b+1.1 end)()", "upvalue 'b'")
-assert(not doit"local aaa={bbb={ddd=next}}; aaa.bbb:ddd(nil)")
+assert(not doit "local aaa={bbb={ddd=next}}; aaa.bbb:ddd(nil)")
 
 -- upvalues being indexed do not go to the stack
 checkmessage("local a,b,cc; (function () a = cc[1] end)()", "upvalue 'cc'")
@@ -162,13 +168,13 @@ checkmessage("aaa={}; x=-aaa", "global 'aaa'")
 
 -- short circuit
 checkmessage("aaa=1; local aaa,bbbb=2,3; aaa = math.sin(1) and bbbb(3)",
-       "local 'bbbb'")
+        "local 'bbbb'")
 checkmessage("aaa=1; local aaa,bbbb=2,3; aaa = bbbb(1) or aaa(3)",
-             "local 'bbbb'")
+        "local 'bbbb'")
 checkmessage("local a,b,c,f = 1,1,1; f((a and b) or c)", "local 'f'")
 checkmessage("local a,b,c = 1,1,1; ((a and b) or c)()", "call a number value")
-assert(not string.find(doit"aaa={}; x=(aaa or aaa)+(aaa and aaa)", "'aaa'"))
-assert(not string.find(doit"aaa={}; (aaa or aaa)()", "'aaa'"))
+assert(not string.find(doit "aaa={}; x=(aaa or aaa)+(aaa and aaa)", "'aaa'"))
+assert(not string.find(doit "aaa={}; (aaa or aaa)()", "'aaa'"))
 
 checkmessage("print(print < 10)", "function with number")
 checkmessage("print(print < print)", "two function values")
@@ -199,7 +205,7 @@ checkmessage("aaa = 1 % 0", "'n%0'")
 -- The following code will try to index the value 10 that is stored in
 -- the metatable, without moving it to a register.
 checkmessage("local a = setmetatable({}, {__index = 10}).x",
-             "attempt to index a number value")
+        "attempt to index a number value")
 
 
 -- numeric for loops
@@ -221,33 +227,35 @@ checkmessage([[
 ]], "light userdata")
 _G.D = nil
 
-do   -- named objects (field '__name')
-  checkmessage("math.sin(io.input())", "(number expected, got FILE*)")
-  _G.XX = setmetatable({}, {__name = "My Type"})
-  assert(string.find(tostring(XX), "^My Type"))
-  checkmessage("io.input(XX)", "(FILE* expected, got My Type)")
-  checkmessage("return XX + 1", "on a My Type value")
-  checkmessage("return ~io.stdin", "on a FILE* value")
-  checkmessage("return XX < XX", "two My Type values")
-  checkmessage("return {} < XX", "table with My Type")
-  checkmessage("return XX < io.stdin", "My Type with FILE*")
-  _G.XX = nil
+do
+    -- named objects (field '__name')
+    checkmessage("math.sin(io.input())", "(number expected, got FILE*)")
+    _G.XX = setmetatable({}, { __name = "My Type" })
+    assert(string.find(tostring(XX), "^My Type"))
+    checkmessage("io.input(XX)", "(FILE* expected, got My Type)")
+    checkmessage("return XX + 1", "on a My Type value")
+    checkmessage("return ~io.stdin", "on a FILE* value")
+    checkmessage("return XX < XX", "two My Type values")
+    checkmessage("return {} < XX", "table with My Type")
+    checkmessage("return XX < io.stdin", "My Type with FILE*")
+    _G.XX = nil
 
-  if T then   -- extra tests for 'luaL_tolstring'
-    -- bug in 5.4.3; 'luaL_tolstring' with negative indices
-    local x = setmetatable({}, {__name="TABLE"})
-    assert(T.testC("Ltolstring -1; return 1", x) == tostring(x))
+    if T then
+        -- extra tests for 'luaL_tolstring'
+        -- bug in 5.4.3; 'luaL_tolstring' with negative indices
+        local x = setmetatable({}, { __name = "TABLE" })
+        assert(T.testC("Ltolstring -1; return 1", x) == tostring(x))
 
-    local a, b = T.testC("pushint 10; Ltolstring -2; return 2", x)
-    assert(a == 10 and b == tostring(x))
+        local a, b = T.testC("pushint 10; Ltolstring -2; return 2", x)
+        assert(a == 10 and b == tostring(x))
 
-    setmetatable(x, {__tostring=function (o)
-      assert(o == x)
-      return "ABC"
-    end})
-    local a, b, c = T.testC("pushint 10; Ltolstring -2; return 3", x)
-    assert(a == x and b == 10 and c == "ABC")
-  end
+        setmetatable(x, { __tostring = function(o)
+            assert(o == x)
+            return "ABC"
+        end })
+        local a, b, c = T.testC("pushint 10; Ltolstring -2; return 3", x)
+        assert(a == x and b == 10 and c == "ABC")
+    end
 end
 
 -- global functions
@@ -256,31 +264,37 @@ checkmessage("(collectgarbage or print){}", "collectgarbage")
 
 -- errors in functions without debug info
 do
-  local f = function (a) return a + 1 end
-  f = assert(load(string.dump(f, true)))
-  assert(f(3) == 4)
-  checkerr("^%?:%-1:", f, {})
+    local f = function(a)
+        return a + 1
+    end
+    f = assert(load(string.dump(f, true)))
+    assert(f(3) == 4)
+    checkerr("^%?:%-1:", f, {})
 
-  -- code with a move to a local var ('OP_MOV A B' with A<B)
-  f = function () local a; a = {}; return a + 2 end
-  -- no debug info (so that 'a' is unknown)
-  f = assert(load(string.dump(f, true)))
-  -- symbolic execution should not get lost
-  checkerr("^%?:%-1:.*table value", f)
+    -- code with a move to a local var ('OP_MOV A B' with A<B)
+    f = function()
+        local a;
+        a = {};
+        return a + 2
+    end
+    -- no debug info (so that 'a' is unknown)
+    f = assert(load(string.dump(f, true)))
+    -- symbolic execution should not get lost
+    checkerr("^%?:%-1:.*table value", f)
 end
 
 
 -- tests for field accesses after RK limit
 local t = {}
 for i = 1, 1000 do
-  t[i] = "aaa = x" .. i
+    t[i] = "aaa = x" .. i
 end
 local s = table.concat(t, "; ")
 t = nil
-checkmessage(s.."; aaa = bbb + 1", "global 'bbb'")
-checkmessage("local _ENV=_ENV;"..s.."; aaa = bbb + 1", "global 'bbb'")
-checkmessage(s.."; local t = {}; aaa = t.bbb + 1", "field 'bbb'")
-checkmessage(s.."; local t = {}; t:bbb()", "method 'bbb'")
+checkmessage(s .. "; aaa = bbb + 1", "global 'bbb'")
+checkmessage("local _ENV=_ENV;" .. s .. "; aaa = bbb + 1", "global 'bbb'")
+checkmessage(s .. "; local t = {}; aaa = t.bbb + 1", "field 'bbb'")
+checkmessage(s .. "; local t = {}; t:bbb()", "method 'bbb'")
 
 checkmessage([[aaa=9
 repeat until 3==3
@@ -326,9 +340,10 @@ local function main()
 end
 main()
 ]], "global 'NoSuchName'")
-print'+'
+print '+'
 
-aaa = {}; setmetatable(aaa, {__index = string})
+aaa = {};
+setmetatable(aaa, { __index = string })
 checkmessage("aaa:sub()", "bad self")
 checkmessage("string.sub('a', {})", "#2")
 checkmessage("('a'):sub{}", "#1")
@@ -342,15 +357,17 @@ _G.aaa = nil
 -- tests for errors in coroutines
 
 local function f (n)
-  local c = coroutine.create(f)
-  local a,b = coroutine.resume(c)
-  return b
+    local c = coroutine.create(f)
+    local a, b = coroutine.resume(c)
+    return b
 end
 assert(string.find(f(), "C stack overflow"))
 
 checkmessage("coroutine.yield()", "outside a coroutine")
 
-f = coroutine.wrap(function () table.sort({1,2,3}, coroutine.yield) end)
+f = coroutine.wrap(function()
+    table.sort({ 1, 2, 3 }, coroutine.yield)
+end)
 checkerr("yield across", f)
 
 
@@ -358,25 +375,26 @@ checkerr("yield across", f)
 -- LUA_IDSIZE, declared as 60 in luaconf. Get one position for '\0'.
 local idsize = 60 - 1
 local function checksize (source)
-  -- syntax error
-  local _, msg = load("x", source)
-  msg = string.match(msg, "^([^:]*):")   -- get source (1st part before ':')
-  assert(msg:len() <= idsize)
+    -- syntax error
+    local _, msg = load("x", source)
+    msg = string.match(msg, "^([^:]*):")   -- get source (1st part before ':')
+    assert(msg:len() <= idsize)
 end
 
-for i = 60 - 10, 60 + 10 do   -- check border cases around 60
-  checksize("@" .. string.rep("x", i))   -- file names
-  checksize(string.rep("x", i - 10))     -- string sources
-  checksize("=" .. string.rep("x", i))   -- exact sources
+for i = 60 - 10, 60 + 10 do
+    -- check border cases around 60
+    checksize("@" .. string.rep("x", i))   -- file names
+    checksize(string.rep("x", i - 10))     -- string sources
+    checksize("=" .. string.rep("x", i))   -- exact sources
 end
 
 
 -- testing line error
 
 local function lineerror (s, l)
-  local err,msg = pcall(load(s))
-  local line = tonumber(string.match(msg, ":(%d+):"))
-  assert(line == l or (not line and not l))
+    local err, msg = pcall(load(s))
+    local line = tonumber(string.match(msg, ":(%d+):"))
+    assert(line == l or (not line and not l))
 end
 
 lineerror("local a\n for i=1,'a' do \n print(i) \n end", 2)
@@ -421,12 +439,15 @@ local p = [[
   function f(x) error('a', XX) end
 g()
 ]]
-XX=3;lineerror((p), 3)
-XX=0;lineerror((p), false)
-XX=1;lineerror((p), 2)
-XX=2;lineerror((p), 1)
+XX = 3;
+lineerror((p), 3)
+XX = 0;
+lineerror((p), false)
+XX = 1;
+lineerror((p), 2)
+XX = 2;
+lineerror((p), 1)
 _G.XX, _G.g, _G.f = nil
-
 
 lineerror([[
 local b = false
@@ -453,137 +474,158 @@ lineerror([[
 ]], 3)
 
 do
-  -- Force a negative estimate for base line. Error in instruction 2
-  -- (after VARARGPREP, GETGLOBAL), with first absolute line information
-  -- (forced by too many lines) in instruction 0.
-  local s = string.format("%s return __A.x", string.rep("\n", 300))
-  lineerror(s, 301)
+    -- Force a negative estimate for base line. Error in instruction 2
+    -- (after VARARGPREP, GETGLOBAL), with first absolute line information
+    -- (forced by too many lines) in instruction 0.
+    local s = string.format("%s return __A.x", string.rep("\n", 300))
+    lineerror(s, 301)
 end
-
 
 if not _soft then
-  -- several tests that exaust the Lua stack
-  collectgarbage()
-  print"testing stack overflow"
-  local C = 0
-  -- get line where stack overflow will happen
-  local l = debug.getinfo(1, "l").currentline + 1
-  local function auxy () C=C+1; auxy() end     -- produce a stack overflow
-  function YY ()
-    collectgarbage("stop")   -- avoid running finalizers without stack space
-    auxy()
-    collectgarbage("restart")
-  end
-
-  local function checkstackmessage (m)
-    print("(expected stack overflow after " .. C .. " calls)")
-    C = 0    -- prepare next count
-    return (string.find(m, "stack overflow"))
-  end
-  -- repeated stack overflows (to check stack recovery)
-  assert(checkstackmessage(doit('YY()')))
-  assert(checkstackmessage(doit('YY()')))
-  assert(checkstackmessage(doit('YY()')))
-
-  _G.YY = nil
-
-
-  -- error lines in stack overflow
-  local l1
-  local function g(x)
-    l1 = debug.getinfo(x, "l").currentline + 2
-    collectgarbage("stop")   -- avoid running finalizers without stack space
-    auxy()
-    collectgarbage("restart")
-  end
-  local _, stackmsg = xpcall(g, debug.traceback, 1)
-  print('+')
-  local stack = {}
-  for line in string.gmatch(stackmsg, "[^\n]*") do
-    local curr = string.match(line, ":(%d+):")
-    if curr then table.insert(stack, tonumber(curr)) end
-  end
-  local i=1
-  while stack[i] ~= l1 do
-    assert(stack[i] == l)
-    i = i+1
-  end
-  assert(i > 15)
-
-
-  -- error in error handling
-  local res, msg = xpcall(error, error)
-  assert(not res and type(msg) == 'string')
-  print('+')
-
-  local function f (x)
-    if x==0 then error('a\n')
-    else
-      local aux = function () return f(x-1) end
-      local a,b = xpcall(aux, aux)
-      return a,b
+    -- several tests that exaust the Lua stack
+    collectgarbage()
+    print "testing stack overflow"
+    local C = 0
+    -- get line where stack overflow will happen
+    local l = debug.getinfo(1, "l").currentline + 1
+    local function auxy ()
+        C = C + 1;
+        auxy()
+    end     -- produce a stack overflow
+    function YY ()
+        collectgarbage("stop")   -- avoid running finalizers without stack space
+        auxy()
+        collectgarbage("restart")
     end
-  end
-  f(3)
 
-  local function loop (x,y,z) return 1 + loop(x, y, z) end
- 
-  local res, msg = xpcall(loop, function (m)
-    assert(string.find(m, "stack overflow"))
-    checkerr("error handling", loop)
-    assert(math.sin(0) == 0)
-    return 15
-  end)
-  assert(msg == 15)
+    local function checkstackmessage (m)
+        print("(expected stack overflow after " .. C .. " calls)")
+        C = 0    -- prepare next count
+        return (string.find(m, "stack overflow"))
+    end
+    -- repeated stack overflows (to check stack recovery)
+    assert(checkstackmessage(doit('YY()')))
+    assert(checkstackmessage(doit('YY()')))
+    assert(checkstackmessage(doit('YY()')))
 
-  local f = function ()
-    for i = 999900, 1000000, 1 do table.unpack({}, 1, i) end
-  end
-  checkerr("too many results", f)
+    _G.YY = nil
+
+
+    -- error lines in stack overflow
+    local l1
+    local function g(x)
+        l1 = debug.getinfo(x, "l").currentline + 2
+        collectgarbage("stop")   -- avoid running finalizers without stack space
+        auxy()
+        collectgarbage("restart")
+    end
+    local _, stackmsg = xpcall(g, debug.traceback, 1)
+    print('+')
+    local stack = {}
+    for line in string.gmatch(stackmsg, "[^\n]*") do
+        local curr = string.match(line, ":(%d+):")
+        if curr then
+            table.insert(stack, tonumber(curr))
+        end
+    end
+    local i = 1
+    while stack[i] ~= l1 do
+        assert(stack[i] == l)
+        i = i + 1
+    end
+    assert(i > 15)
+
+
+    -- error in error handling
+    local res, msg = xpcall(error, error)
+    assert(not res and type(msg) == 'string')
+    print('+')
+
+    local function f (x)
+        if x == 0 then
+            error('a\n')
+        else
+            local aux = function()
+                return f(x - 1)
+            end
+            local a, b = xpcall(aux, aux)
+            return a, b
+        end
+    end
+    f(3)
+
+    local function loop (x, y, z)
+        return 1 + loop(x, y, z)
+    end
+
+    local res, msg = xpcall(loop, function(m)
+        assert(string.find(m, "stack overflow"))
+        checkerr("error handling", loop)
+        assert(math.sin(0) == 0)
+        return 15
+    end)
+    assert(msg == 15)
+
+    local f = function()
+        for i = 999900, 1000000, 1 do
+            table.unpack({}, 1, i)
+        end
+    end
+    checkerr("too many results", f)
 
 end
 
-
 do
-  -- non string messages
-  local t = {}
-  local res, msg = pcall(function () error(t) end)
-  assert(not res and msg == t)
+    -- non string messages
+    local t = {}
+    local res, msg = pcall(function()
+        error(t)
+    end)
+    assert(not res and msg == t)
 
-  res, msg = pcall(function () error(nil) end)
-  assert(not res and msg == nil)
+    res, msg = pcall(function()
+        error(nil)
+    end)
+    assert(not res and msg == nil)
 
-  local function f() error{msg='x'} end
-  res, msg = xpcall(f, function (r) return {msg=r.msg..'y'} end)
-  assert(msg.msg == 'xy')
+    local function f()
+        error { msg = 'x' }
+    end
+    res, msg = xpcall(f, function(r)
+        return { msg = r.msg .. 'y' }
+    end)
+    assert(msg.msg == 'xy')
 
-  -- 'assert' with extra arguments
-  res, msg = pcall(assert, false, "X", t)
-  assert(not res and msg == "X")
- 
-  -- 'assert' with no message
-  res, msg = pcall(function () assert(false) end)
-  local line = string.match(msg, "%w+%.lua:(%d+): assertion failed!$")
-  assert(tonumber(line) == debug.getinfo(1, "l").currentline - 2)
+    -- 'assert' with extra arguments
+    res, msg = pcall(assert, false, "X", t)
+    assert(not res and msg == "X")
 
-  -- 'assert' with non-string messages
-  res, msg = pcall(assert, false, t)
-  assert(not res and msg == t)
+    -- 'assert' with no message
+    res, msg = pcall(function()
+        assert(false)
+    end)
+    local line = string.match(msg, "%w+%.lua:(%d+): assertion failed!$")
+    assert(tonumber(line) == debug.getinfo(1, "l").currentline - 2)
 
-  res, msg = pcall(assert, nil, nil)
-  assert(not res and msg == nil)
+    -- 'assert' with non-string messages
+    res, msg = pcall(assert, false, t)
+    assert(not res and msg == t)
 
-  -- 'assert' without arguments
-  res, msg = pcall(assert)
-  assert(not res and string.find(msg, "value expected"))
+    res, msg = pcall(assert, nil, nil)
+    assert(not res and msg == nil)
+
+    -- 'assert' without arguments
+    res, msg = pcall(assert)
+    assert(not res and string.find(msg, "value expected"))
 end
 
 -- xpcall with arguments
 local a, b, c = xpcall(string.find, error, "alo", "al")
 assert(a and b == 1 and c == 2)
-a, b, c = xpcall(string.find, function (x) return {} end, true, "al")
+a, b, c = xpcall(string.find, function(x)
+    return {}
+end, true, "al")
 assert(not a and type(b) == "table" and c == nil)
-
 
 print("testing tokens in error messages")
 checksyntax("syntax error", "", "error", 1)
@@ -600,31 +642,33 @@ checksyntax("a\1a = 1", "", "<\\1>", 1)
 checksyntax("\255a = 1", "", "<\\255>", 1)
 
 doit('I = load("a=9+"); aaa=3')
-assert(_G.aaa==3 and not _G.I)
-_G.I,_G.aaa = nil
+assert(_G.aaa == 3 and not _G.I)
+_G.I, _G.aaa = nil
 print('+')
 
 local lim = 1000
-if _soft then lim = 100 end
-for i=1,lim do
-  doit('a = ')
-  doit('a = 4+nil')
+if _soft then
+    lim = 100
+end
+for i = 1, lim do
+    doit('a = ')
+    doit('a = 4+nil')
 end
 
 
 -- testing syntax limits
 
 local function testrep (init, rep, close, repc, finalresult)
-  local s = init .. string.rep(rep, 100) .. close .. string.rep(repc, 100)
-  local res, msg = load(s)
-  assert(res)   -- 100 levels is OK
-  if (finalresult) then
-    assert(res() == finalresult)
-  end
-  s = init .. string.rep(rep, 500)
-  local res, msg = load(s)   -- 500 levels not ok
-  assert(not res and (string.find(msg, "too many") or
-                      string.find(msg, "overflow")))
+    local s = init .. string.rep(rep, 100) .. close .. string.rep(repc, 100)
+    local res, msg = load(s)
+    assert(res)   -- 100 levels is OK
+    if (finalresult) then
+        assert(res() == finalresult)
+    end
+    s = init .. string.rep(rep, 500)
+    local res, msg = load(s)   -- 500 levels not ok
+    assert(not res and (string.find(msg, "too many") or
+            string.find(msg, "overflow")))
 end
 
 testrep("local a; a", ",a", "= 1", ",1")    -- multiple assignment
@@ -645,34 +689,34 @@ checkmessage("a = f(x" .. string.rep(",x", 260) .. ")", "too many registers")
 
 -- upvalues
 local lim = 127
-local  s = "local function fooA ()\n  local "
-for j = 1,lim do
-  s = s.."a"..j..", "
+local s = "local function fooA ()\n  local "
+for j = 1, lim do
+    s = s .. "a" .. j .. ", "
 end
-s = s.."b,c\n"
-s = s.."local function fooB ()\n  local "
-for j = 1,lim do
-  s = s.."b"..j..", "
+s = s .. "b,c\n"
+s = s .. "local function fooB ()\n  local "
+for j = 1, lim do
+    s = s .. "b" .. j .. ", "
 end
-s = s.."b\n"
-s = s.."function fooC () return b+c"
-local c = 1+2
-for j = 1,lim do
-  s = s.."+a"..j.."+b"..j
-  c = c + 2
+s = s .. "b\n"
+s = s .. "function fooC () return b+c"
+local c = 1 + 2
+for j = 1, lim do
+    s = s .. "+a" .. j .. "+b" .. j
+    c = c + 2
 end
-s = s.."\nend  end end"
-local a,b = load(s)
+s = s .. "\nend  end end"
+local a, b = load(s)
 assert(c > 255 and string.find(b, "too many upvalues") and
-       string.find(b, "line 5"))
+        string.find(b, "line 5"))
 
 -- local variables
 s = "\nfunction foo ()\n  local "
-for j = 1,300 do
-  s = s.."a"..j..", "
+for j = 1, 300 do
+    s = s .. "a" .. j .. ", "
 end
-s = s.."b\n"
-local a,b = load(s)
+s = s .. "b\n"
+local a, b = load(s)
 assert(string.find(b, "line 2") and string.find(b, "too many local variables"))
 
 mt.__index = oldmm

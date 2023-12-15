@@ -50,7 +50,7 @@ class LuaParserBaseListener : LuaParserListener {
      *
      * The default implementation does nothing.
      */
-    override fun enterBlock(ctx: LuaParser.BlockContext?) {}
+    override fun enterBlock(ctx: BlockContext?) {}
 
     /**
      * {@inheritDoc}
@@ -58,7 +58,7 @@ class LuaParserBaseListener : LuaParserListener {
      *
      * The default implementation does nothing.
      */
-    override fun exitBlock(ctx: LuaParser.BlockContext?) {}
+    override fun exitBlock(ctx: BlockContext?) {}
 
     /**
      * {@inheritDoc}
@@ -130,7 +130,7 @@ class LuaParserBaseListener : LuaParserListener {
      *
      * The default implementation does nothing.
      */
-    override fun enterLabel(ctx: LuaParser.LabelContext?) {}
+    override fun enterLabel(ctx: LabelContext?) {}
 
     /**
      * {@inheritDoc}
@@ -138,7 +138,7 @@ class LuaParserBaseListener : LuaParserListener {
      *
      * The default implementation does nothing.
      */
-    override fun exitLabel(ctx: LuaParser.LabelContext?) {}
+    override fun exitLabel(ctx: LabelContext?) {}
 
     /**
      * {@inheritDoc}
@@ -418,7 +418,7 @@ class LuaParserBaseListener : LuaParserListener {
      *
      * The default implementation does nothing.
      */
-    override fun enterString(ctx: LuaParser.StringContext?) {}
+    override fun enterString(ctx: StringContext?) {}
 
     /**
      * {@inheritDoc}
@@ -426,7 +426,7 @@ class LuaParserBaseListener : LuaParserListener {
      *
      * The default implementation does nothing.
      */
-    override fun exitString(ctx: LuaParser.StringContext?) {}
+    override fun exitString(ctx: StringContext?) {}
 
     /**
      * {@inheritDoc}

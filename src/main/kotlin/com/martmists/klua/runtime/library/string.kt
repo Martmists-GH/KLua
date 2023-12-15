@@ -1,7 +1,6 @@
 package com.martmists.klua.runtime.library
 
 import com.martmists.klua.ext.argument
-import com.martmists.klua.runtime.async.LuaCoroutineScope
 import com.martmists.klua.runtime.type.*
 import java.util.*
 
@@ -37,7 +36,7 @@ fun TTable.insertString() {
             }
         }
 
-        return_(s.value.substring(((i.value-1).toInt()), j.value.toInt()).map { TLong(it.code.toLong()) })
+        return_(s.value.substring(((i.value - 1).toInt()), j.value.toInt()).map { TLong(it.code.toLong()) })
     }
     this["char"] = TFunction { args ->
         val chars = args.mapIndexed { i, v ->

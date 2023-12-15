@@ -32,6 +32,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
                 nextValue = null
                 res
             }
+
             State.DEAD -> LuaStatus("dead coroutine")
             State.FAILED -> LuaStatus("failed coroutine")
         }

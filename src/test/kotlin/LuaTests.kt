@@ -28,9 +28,11 @@ class LuaTests {
         val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
-                engine.execute("""
+                engine.execute(
+                    """
                     print("Hello World!")
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
         }
         assertEquals("Hello World!$eol", output)
@@ -41,9 +43,11 @@ class LuaTests {
         val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
-                engine.execute("""
+                engine.execute(
+                    """
                     print("Hello " .. "World!")
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
         }
         assertEquals("Hello World!$eol", output)
@@ -54,10 +58,12 @@ class LuaTests {
         val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
-                engine.execute("""
+                engine.execute(
+                    """
                     print(0x0F | 0xF0)
                     print(0x0F & 0xF0)
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
         }
         assertEquals("255${eol}0$eol", output)
@@ -68,9 +74,11 @@ class LuaTests {
         val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
-                engine.execute("""
+                engine.execute(
+                    """
                     print(#"Hello World!")
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
         }
         assertEquals("12$eol", output)
@@ -81,14 +89,16 @@ class LuaTests {
         val engine = LuaInterpreter()
         val output = captureStdout {
             runBlocking {
-                engine.execute("""
+                engine.execute(
+                    """
                     local mt = {}
                     mt.__add = function(a, b)
                         return a.value + b
                     end
                     local item = setmetatable({value = 12}, mt)
                     print(item + 3)
-                """.trimIndent())
+                """.trimIndent()
+                )
             }
         }
         assertEquals("15$eol", output)

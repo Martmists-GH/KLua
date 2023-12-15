@@ -70,6 +70,7 @@ class Scope(
                     }
                 }
             }
+
             is BinaryAdd -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -78,6 +79,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryAnd -> {
                 val lhs = node.left.get().first()
                 if (lhs.asBool()) {
@@ -87,6 +89,7 @@ class Scope(
                     stack.add(TBoolean.FALSE)
                 }
             }
+
             is BinaryBitwiseAnd -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -95,6 +98,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryBitwiseOr -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -103,6 +107,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryBitwiseShl -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -111,6 +116,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryBitwiseShr -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -119,6 +125,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryBitwiseXor -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -127,6 +134,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryConcat -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -135,6 +143,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryDiv -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -143,6 +152,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryEQ -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -151,6 +161,7 @@ class Scope(
                 }
                 stack.add(TBoolean.of(res.first().asBool()))
             }
+
             is BinaryGE -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -159,6 +170,7 @@ class Scope(
                 }
                 stack.add(TBoolean.of(!res.first().asBool()))
             }
+
             is BinaryGT -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -167,6 +179,7 @@ class Scope(
                 }
                 stack.add(TBoolean.of(!res.first().asBool()))
             }
+
             is BinaryIDiv -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -175,6 +188,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryLE -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -183,6 +197,7 @@ class Scope(
                 }
                 stack.add(TBoolean.of(res.first().asBool()))
             }
+
             is BinaryLT -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -191,6 +206,7 @@ class Scope(
                 }
                 stack.add(TBoolean.of(res.first().asBool()))
             }
+
             is BinaryMod -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -199,6 +215,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryMul -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -207,6 +224,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinaryNE -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -215,6 +233,7 @@ class Scope(
                 }
                 stack.add(TBoolean.of(!res.first().asBool()))
             }
+
             is BinaryOr -> {
                 val lhs = node.left.get().first()
                 if (lhs.asBool()) {
@@ -224,6 +243,7 @@ class Scope(
                     stack.add(TBoolean.of(rhs.asBool()))
                 }
             }
+
             is BinaryPow -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -232,6 +252,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is BinarySub -> {
                 val lhs = node.left.get().first()
                 val rhs = node.right.get().first()
@@ -240,6 +261,7 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is Block -> {
                 val labels = mutableMapOf<String, Int>()
                 for ((i, statement) in node.statements.withIndex()) {
@@ -255,16 +277,16 @@ class Scope(
                         labels[stmt.value] = i
                     }
                 }
-                val newScope = Scope(this, env, varargs=varargs)
+                val newScope = Scope(this, env, varargs = varargs)
                 var i = 0
-                outer@while (i < node.statements.size) {
+                outer@ while (i < node.statements.size) {
                     val statement = node.statements[i++]
                     val luaScope = createLuaScope {
                         newScope.evaluate(statement)
                     }
 //                    println(newScope.loadVar("counter"))
                     var values = emptyList<TValue<*>>()
-                    inner@while (true) {
+                    inner@ while (true) {
                         val res = luaScope.trySend(values)
                         if (res is LuaStatus.Goto) {
                             val label = labels[res.label]
@@ -284,6 +306,7 @@ class Scope(
                     }
                 }
             }
+
             Break -> break_()
             Continue -> continue_()
             is FunctionCall -> {
@@ -309,12 +332,15 @@ class Scope(
                             stack.addAll(res.values)
                             break
                         }
+
                         is LuaStatus.Yield -> {
                             values = emit(res)
                         }
+
                         is LuaStatus.Goto -> {
                             error("no visible label '${res.label}' for <goto>")
                         }
+
                         is LuaStatus.Error, is LuaStatus.StopIteration -> {
                             emit(res)
                             break
@@ -322,6 +348,7 @@ class Scope(
                     }
                 }
             }
+
             is GenericForLoop -> {
                 node.expressions.forEach {
                     evaluate(it)
@@ -331,7 +358,7 @@ class Scope(
                 val iterator = stack.removeLast()
                 stack.clear()
 
-                genericFor@while (true) {
+                genericFor@ while (true) {
                     val values = collectAsLuaScope {
                         iterator.luaCall(listOf(invariant, initial))
                     }
@@ -348,7 +375,7 @@ class Scope(
                         }
                     }
                     var values2 = emptyList<TValue<*>>()
-                    inner@while (true) {
+                    inner@ while (true) {
                         val res = scope.trySend(values2)
                         if (res is LuaStatus.StopIteration) {
                             if (res.isBreak) {
@@ -368,9 +395,11 @@ class Scope(
                     }
                 }
             }
+
             is Goto -> {
                 goto(node.value)
             }
+
             is IfElseBlock -> {
                 val cond = node.condition.get().first()
                 if (cond.asBool()) {
@@ -379,9 +408,11 @@ class Scope(
                     evaluate(node.elseBlock)
                 }
             }
+
             is Label -> {
                 // No-op
             }
+
             is LoadAttribute -> {
                 val owner = node.owner.get().first()
                 val res = collectAsLuaScope {
@@ -389,16 +420,19 @@ class Scope(
                 }
                 stack.add(res.first())
             }
+
             is LoadName -> {
                 val res = collectAsLuaScope {
                     loadVar(node.value)
                 }
                 stack.add(res.first())
             }
+
             is NamedFunction -> {
                 evaluate(node.function)
                 stack.add((stack.removeLast() as TFunction).apply { name = node.name })
             }
+
             NoOp -> {}
             is NumericForLoop -> TODO("NumericForLoop")
             is PushBoolean -> stack.add(TBoolean.of(node.value))
@@ -409,13 +443,14 @@ class Scope(
             PushVarargs -> {
                 stack.addAll(varargs.asReversed())
             }
+
             is RepeatUntilLoop -> {
-                outer@while (true) {
+                outer@ while (true) {
                     val scope = createLuaScope {
                         evaluate(node.block)
                     }
                     var values = emptyList<TValue<*>>()
-                    inner@while (true) {
+                    inner@ while (true) {
                         val res = scope.trySend(values)
                         if (res is LuaStatus.StopIteration) {
                             if (res.isBreak) {
@@ -439,11 +474,13 @@ class Scope(
                     }
                 }
             }
+
             is Return -> return_(node.values.flatMap { it.get() })
             is Statement -> {
                 evaluate(node.node)
                 stack.clear()
             }
+
             is TableConstructor -> {
                 val table = TTable()
                 for ((key, value) in node.fields) {
@@ -452,30 +489,35 @@ class Scope(
                 }
                 stack.add(table)
             }
+
             is UnaryBitwiseNot -> {
                 val res = collectAsLuaScope {
                     node.item.get().first().luaBnot()
                 }
                 stack.add(res.first())
             }
+
             is UnaryLen -> {
                 val res = collectAsLuaScope {
                     node.item.get().first().luaLen()
                 }
                 stack.add(res.first())
             }
+
             is UnaryNeg -> {
                 val res = collectAsLuaScope {
                     node.item.get().first().luaUnm()
                 }
                 stack.add(res.first())
             }
+
             is UnaryNot -> {
                 val res = collectAsLuaScope {
                     node.item.get().first()
                 }
                 stack.add(TBoolean.of(!res.first().asBool()))
             }
+
             is UnnamedFunction -> {
                 val args = if (node.isVararg) node.namedArgs.size else 0
                 val func = TFunction {
@@ -487,8 +529,9 @@ class Scope(
                 }
                 stack.add(func)
             }
+
             is WhileLoop -> {
-                outer@while (true) {
+                outer@ while (true) {
                     val cond = node.condition.get().first()
                     if (!cond.asBool()) {
                         break
@@ -497,7 +540,7 @@ class Scope(
                         evaluate(node.block)
                     }
                     var values = emptyList<TValue<*>>()
-                    inner@while (true) {
+                    inner@ while (true) {
                         val res = scope.trySend(values)
                         if (res is LuaStatus.StopIteration) {
                             if (res.isBreak) {
@@ -517,6 +560,7 @@ class Scope(
                     }
                 }
             }
+
             is ASTNode.Sourced<*> -> {
                 val scope = createLuaScope {
                     evaluate(node.node)
@@ -529,34 +573,55 @@ class Scope(
                         is LuaStatus.Error -> {
                             // Add source to stack trace
                             if (res.stackTrace.last().source == null) {
-                                res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))
+                                res.copy(
+                                    stackTrace = res.stackTrace.dropLast(1) + StackFrame(
+                                        res.stackTrace.last().function ?: node.source.asLocation(), node.source
+                                    )
+                                )
                             } else {
                                 res
                             }
                         }
+
                         is LuaStatus.Goto -> {
                             // Add source to stack trace
                             if (res.stackTrace.last().source == null) {
-                                res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))
+                                res.copy(
+                                    stackTrace = res.stackTrace.dropLast(1) + StackFrame(
+                                        res.stackTrace.last().function ?: node.source.asLocation(), node.source
+                                    )
+                                )
                             } else {
                                 res
                             }
                         }
+
                         is LuaStatus.Return -> res
                         is LuaStatus.StopIteration -> {
                             // Add source to stack trace
                             if (res.stackTrace.last().source == null) {
-                                res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))
+                                res.copy(
+                                    stackTrace = res.stackTrace.dropLast(1) + StackFrame(
+                                        res.stackTrace.last().function ?: node.source.asLocation(), node.source
+                                    )
+                                )
                             } else {
                                 res
-                            }                        }
+                            }
+                        }
+
                         is LuaStatus.Yield -> {
                             // Add source to stack trace
                             if (res.stackTrace.last().source == null) {
-                                res.copy(stackTrace = res.stackTrace.dropLast(1) + StackFrame(res.stackTrace.last().function ?: node.source.asLocation(), node.source))
+                                res.copy(
+                                    stackTrace = res.stackTrace.dropLast(1) + StackFrame(
+                                        res.stackTrace.last().function ?: node.source.asLocation(), node.source
+                                    )
+                                )
                             } else {
                                 res
-                            }                        }
+                            }
+                        }
                     }
 
                     values = emit(transformed)

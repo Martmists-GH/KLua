@@ -1,4 +1,4 @@
 package com.martmists.klua.ast.node
 
-data class BinaryBitwiseShr(val left: ASTNode, val right: ASTNode): ASTNode
+data class BinaryBitwiseShr(val left: ASTNode, val right: ASTNode) : ASTNode
 

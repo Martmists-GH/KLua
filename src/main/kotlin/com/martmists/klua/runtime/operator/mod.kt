@@ -1,7 +1,8 @@
 package com.martmists.klua.runtime.operator
 
-import com.martmists.klua.runtime.type.*
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.type.*
+
 context(LuaCoroutineScope)
 suspend fun TValue<*>.luaMod(other: TValue<*>) {
     if (this is TNumber<*> && other is TNumber<*>) {

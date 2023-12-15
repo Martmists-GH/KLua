@@ -19,11 +19,13 @@ private fun String.luaContents(): String {
                         i++
                     }
                 }
+
                 '\r' -> {
                     if (this[i + 2] == '\n') {
                         i++
                     }
                 }
+
                 '\n' -> {}
                 else -> builder.append(next)
             }

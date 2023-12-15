@@ -1,7 +1,7 @@
 package com.martmists.klua.runtime.operator
 
-import com.martmists.klua.runtime.type.*
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.type.*
 import kotlin.math.pow
 
 context(LuaCoroutineScope)

@@ -7,7 +7,6 @@ import com.martmists.klua.ext.fromLuaNormal
 import com.martmists.klua.meta.SourceLocation
 import com.martmists.klua.parsing.LuaParser.*
 import org.antlr.v4.runtime.ParserRuleContext
-import org.antlr.v4.runtime.Token
 import org.antlr.v4.runtime.tree.TerminalNode
 import kotlin.math.max
 import kotlin.math.min
@@ -16,7 +15,7 @@ import kotlin.math.min
 class ASTTransformer(private val source: String, val filename: String = "<input>") {
     val ParserRuleContext.source: SourceLocation
         get() {
-            val line = this@ASTTransformer.source.lines()[start.line-1]
+            val line = this@ASTTransformer.source.lines()[start.line - 1]
             val index = start.charPositionInLine
             val begin = min(start.startIndex, stop.startIndex)
             val end = max(start.stopIndex, stop.stopIndex) + 1
@@ -27,11 +26,18 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
 
     val TerminalNode.source: SourceLocation
         get() {
-            val line = this@ASTTransformer.source.lines()[this.symbol.line-1]
+            val line = this@ASTTransformer.source.lines()[this.symbol.line - 1]
             val index = this.symbol.charPositionInLine
             val size = this.text.length
             val ws = line.takeWhile { it.isWhitespace() }.count()
-            return SourceLocation(line.substring(ws), index - ws, size, filename, this.symbol.line, this.symbol.charPositionInLine + 1)
+            return SourceLocation(
+                line.substring(ws),
+                index - ws,
+                size,
+                filename,
+                this.symbol.line,
+                this.symbol.charPositionInLine + 1
+            )
         }
 
     @Suppress("unused")
@@ -59,8 +65,9 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
             node.varlist() != null -> Assign(
                 transform(node.varlist()!!),
                 transform(node.explist()!!),
-                local=false,
+                local = false,
             ) withSource node.source
+
             node.functioncall() != null -> transform(node.functioncall()!!)
             node.label() != null -> transform(node.label()!!)
             node.BREAK() != null -> Break withSource node.source
@@ -73,6 +80,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                             transform(node.block(0)!!)
                         ) withSource node.source
                     }
+
                     node.EQ() != null -> {
                         NumericForLoop(
                             node.NAME()!!.text,
@@ -86,6 +94,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                             transform(node.block(0)!!)
                         ) withSource node.source
                     }
+
                     node.IN() != null -> {
                         GenericForLoop(
                             transform(node.namelist()!!),
@@ -93,17 +102,20 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                             transform(node.block(0)!!),
                         ) withSource node.source
                     }
+
                     else -> {
                         transform(node.block(0)!!)
                     }
                 }
             }
+
             node.REPEAT() != null -> {
                 RepeatUntilLoop(
                     transform(node.block(0)!!),
                     transform(node.exp(0)!!)
                 ) withSource node.source
             }
+
             node.IF() != null -> {
                 // TODO: Source
                 val conditions = node.exp().map { transform(it) }.toMutableList()
@@ -119,6 +131,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                 }
                 last withSource node.source
             }
+
             node.FUNCTION() != null -> {
                 if (node.LOCAL() != null) {
                     val name = node.NAME()!!.text
@@ -127,7 +140,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                         listOf(transform(node.funcbody()!!).let {
                             NamedFunction(name, it.node) withSource node.source
                         }),
-                        local=true,
+                        local = true,
                     ) withSource node.source
                 } else {
                     val name = transform(node.funcname()!!)
@@ -140,26 +153,28 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                                 NamedFunction(node.source.asLocation(), it.node)
                             } withSource node.source
                         }),
-                        local=false,
+                        local = false,
                     ) withSource node.source
                 }
             }
+
             node.attnamelist() != null -> {
                 val targets = transform(node.attnamelist()!!)
                 if (node.explist() != null) {
                     Assign(
                         targets,
                         transform(node.explist()!!),
-                        local=true,
+                        local = true,
                     ) withSource node.source
                 } else {
                     Assign(
                         targets,
                         List(targets.size) { PushNil },
-                        local=true,
+                        local = true,
                     ) withSource node.source
                 }
             }
+
             else -> throw IllegalStateException("Unknown stat: ${node.text}")
         }
         return Statement(stmt) withSource node.source
@@ -181,6 +196,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                 }
                 LoadAttribute(root, child) withSource node.source
             }
+
             node.NAME() != null -> LoadName(node.NAME()!!.text) withSource node.source
             else -> throw IllegalStateException("Unknown var: ${node.text}")
         }
@@ -201,6 +217,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
             node.functiondef() != null -> transform(node.functiondef()!!).let {
                 NamedFunction(node.source.asLocation(), it.node) withSource node.source
             }
+
             node.prefixexp() != null -> transform(node.prefixexp()!!)
             node.tableconstructor() != null -> transform(node.tableconstructor()!!)
             node.exp().size == 1 -> {
@@ -214,6 +231,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                     else -> throw IllegalStateException("Unknown unary op: ${node.text}")
                 } withSource node.source
             }
+
             node.exp().size == 2 -> {
                 // Binary Op
                 val left = transform(node.exp(0)!!)
@@ -243,6 +261,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                     else -> throw IllegalStateException("Unknown binary op: ${node.text}")
                 } withSource node.source
             }
+
             else -> throw IllegalStateException("Unknown exp: ${node.text}")
         }
     }
@@ -296,10 +315,12 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
             node.functioncall() != null -> {
                 transform(node.functioncall()!!)
             }
+
             node.OP() != null -> {
                 start = 3
                 transform(node.exp(expIdx++)!!)
             }
+
             else -> {
                 val name = node.NAME(nameIdx++)
                 val text = name!!.text
@@ -314,6 +335,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                     owner = LoadAttribute(owner, PushString(node.NAME(nameIdx++)!!.text))
                     start += 2
                 }
+
                 "[" -> {
                     owner = LoadAttribute(owner, transform(node.exp(expIdx++)!!))
                     start += 3
@@ -333,10 +355,12 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
             node.functioncall() != null -> {
                 transform(node.functioncall()!!)
             }
+
             node.OP() != null -> {
                 start = 3
                 transform(node.exp(expIdx++)!!)
             }
+
             else -> {
                 val name = node.NAME(nameIdx++)!!
                 val text = name.text
@@ -351,22 +375,25 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                     owner = LoadAttribute(owner, PushString(node.NAME(nameIdx++)!!.text))
                     start += 2
                 }
+
                 "[" -> {
                     owner = LoadAttribute(owner, transform(node.exp(expIdx++)!!))
                     start += 3
                 }
+
                 ":" -> {
                     return FunctionCall(
                         LoadAttribute(owner, PushString(node.NAME(nameIdx)!!.text)),
                         transform(node.args()!!),
-                        isMethod=true
+                        isMethod = true
                     ) withSource node.source
                 }
+
                 else -> {
                     return FunctionCall(
                         owner,
                         transform(node.args()!!),
-                        isMethod=false
+                        isMethod = false
                     ) withSource node.source
                 }
             }
@@ -406,10 +433,12 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
                 transform(node.exp(0)!!),
                 transform(node.exp(1)!!)
             )
+
             node.NAME() != null -> TableConstructor.TableField(
                 PushString(node.NAME()!!.text),
                 transform(node.exp(0)!!)
             )
+
             else -> TableConstructor.IndexedTableField(transform(node.exp(0)!!))
         }
     }
@@ -420,7 +449,7 @@ class ASTTransformer(private val source: String, val filename: String = "<input>
 
     private fun transform(node: FuncnameContext): ASTNode {
         val names = node.NAME().map { it.text to it.source }.toMutableList()
-        var root: ASTNode = names.removeFirst().let{
+        var root: ASTNode = names.removeFirst().let {
             LoadName(it.first) withSource it.second
         }
         for ((name, source) in names) {

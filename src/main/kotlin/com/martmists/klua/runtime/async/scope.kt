@@ -15,8 +15,7 @@ suspend fun collectAsLuaScope(block: suspend LuaCoroutineScope.() -> Unit): List
     val scope = createLuaScope(block)
     var items = emptyList<TValue<*>>()
     while (true) {
-        val res = scope.send(items)
-        when (res) {
+        when (val res = scope.send(items)) {
             is LuaStatus.Return -> {
                 return res.values
             }
