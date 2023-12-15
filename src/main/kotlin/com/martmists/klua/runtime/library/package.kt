@@ -11,7 +11,7 @@ fun TTable.insertPackage() {
     this["cpath"] = TString("")
     this["loaded"] = TTable()  // NOTE: This table is updated by require()
     this["loadlib"] = TFunction { args ->
-        // TODO
+        TODO()
     }
     this["path"] = TString("")  // TODO
     this["preload"] = TTable()  // NOTE: This table is updated by require()
@@ -19,6 +19,6 @@ fun TTable.insertPackage() {
         // TODO
     }
     this["searchpath"] = TFunction { args ->
-        // TODO
+        TODO()
     }
 }
