@@ -5,7 +5,7 @@ sealed class TValue<T> {
     abstract val value: T
     abstract var metatable: TValue<*>
 
-//    override fun hashCode() = value.hashCode()
-//    override fun equals(other: Any?) = other is TValue<*> && type == other.type && other.value == value
-//    override fun toString() = "${this::class.simpleName}(${value.toString()})"
+    override fun hashCode() = value.hashCode()
+    override fun equals(other: Any?) = other is TValue<*> && type == other.type && other.value == value
+    override fun toString() = "${this::class.simpleName}(${value.toString()})"
 }

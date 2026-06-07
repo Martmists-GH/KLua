@@ -3,26 +3,36 @@ package com.martmists.klua.runtime.type
 import com.martmists.klua.meta.StackFrame
 import com.martmists.klua.runtime.LuaException
 import com.martmists.klua.runtime.LuaStatus
+import com.martmists.klua.runtime.Scope
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.LuaCoroutineScopeImpl
 import com.martmists.klua.runtime.async.createLuaScope
+import com.martmists.klua.runtime.async.emit
+import com.martmists.klua.runtime.async.error_
 
-class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
+class TFunction(var scope: Scope? = null, override val value: TFunctionType) : TValue<TFunctionType>() {
     override val type = LuaType.FUNCTION
     override var metatable by Companion::metatable
 
     var name = "<unknown>"
 
-    context(LuaCoroutineScope)
+    constructor(name: String, scope: Scope? = null, block: TFunctionType) : this(scope, block) {
+        this.name = name
+    }
+
+    context(_: LuaCoroutineScope)
     suspend fun invoke(args: List<TValue<*>>) {
         val coro = createLuaScope {
+            (this as LuaCoroutineScopeImpl).scope = scope
             value(args)
+            error_("TFunction did not return!")
         }
 
         var values = emptyList<TValue<*>>()
         while (true) {
-            if (name == "<unknown>") {
-                error("Attempt to call function with no name")
-            }
+//            if (name == "<unknown>") {
+//                error_("Attempt to call function with no name")
+//            }
             val transformed = when (val res = coro.send(values)) {
                 is LuaStatus.Error -> {
                     // Add call to stacktrace
@@ -47,7 +57,7 @@ class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
                 is LuaStatus.Goto -> {
                     // Add call to stacktrace
                     LuaStatus.Error(
-                        "no visible label '${res.label}' for <goto>",
+                        TString("no visible label '${res.label}' for <goto>"),
                         res.stackTrace.dropLast(1) + StackFrame(name, res.stackTrace.last().source) + StackFrame(
                             null,
                             null
@@ -78,7 +88,5 @@ class TFunction(override val value: TFunctionType) : TValue<TFunctionType>() {
                 if (value !is TTable && value !is TNil) throw LuaException("Table expected, got ${value.type.luaName}")
                 _metatable = if (value is TNil) null else value as TTable
             }
-
-        operator fun invoke(name: String, block: TFunctionType) = TFunction(block).also { it.name = name }
     }
 }

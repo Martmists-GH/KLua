@@ -36,14 +36,12 @@ class TTable : TValue<OrderedHashMap<TValue<*>, TValue<*>>>() {
 
     operator fun get(key: String): TValue<*> = get(TString(key))
 
-    fun asList(): Iterator<TValue<*>> {
-        var i = 1L
-        return iterator {
-            var key = TLong(i++)
-            while (key in this@TTable.map) {
-                yield(this@TTable[key])
-                key = TLong(i++)
+    val length: Long
+        get() {
+            var i = TLong(1)
+            while (i in value) {
+                i = TLong(i.value + 1)
             }
+            return i.value - 1
         }
-    }
 }

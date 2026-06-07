@@ -3,9 +3,15 @@ package com.martmists.klua.runtime
 import com.martmists.klua.ast.ASTTransformer
 import com.martmists.klua.parsing.LuaLexer
 import com.martmists.klua.parsing.LuaParser
+import com.martmists.klua.runtime.LuaStatus
+import com.martmists.klua.runtime.async.LuaCoroutineScopeImpl
+import com.martmists.klua.runtime.async.collectAsLuaScope
 import com.martmists.klua.runtime.async.createLuaScope
 import com.martmists.klua.runtime.library.insertBasic
+import com.martmists.klua.runtime.operator.luaToString
 import com.martmists.klua.runtime.type.TNil
+import com.martmists.klua.runtime.type.TNumber
+import com.martmists.klua.runtime.type.TString
 import com.martmists.klua.runtime.type.TTable
 import com.martmists.klua.runtime.type.TValue
 import org.antlr.v4.runtime.CharStreams
@@ -26,26 +32,26 @@ class LuaInterpreter {
         val ast = parser.start_()
         val node = ASTTransformer(source, filename).transform(ast)
 
-//        println(node)
-
+        val funcScope = Scope(root)
         val scope = createLuaScope {
-            Scope(root).evaluate(node)
+            (this as LuaCoroutineScopeImpl).scope = funcScope
+            funcScope.evaluate(node)
         }
         beforeExecute(root.env)
         return when (val res = scope.send(emptyList())) {
             is LuaStatus.Error -> reportError(res)
-            is LuaStatus.Yield -> reportError(LuaStatus.Error("yield outside coroutine", res.stackTrace))
+            is LuaStatus.Yield -> reportError(LuaStatus.Error(TString("yield outside coroutine"), res.stackTrace))
             is LuaStatus.Return -> res.values
             is LuaStatus.Goto -> reportError(
                 LuaStatus.Error(
-                    "no visible label '${res.label}' for <goto>",
+                    TString("no visible label '${res.label}' for <goto>"),
                     res.stackTrace
                 )
             )
 
             is LuaStatus.StopIteration -> {
                 if (res.isBreak) {
-                    reportError(LuaStatus.Error("break outside loop", res.stackTrace))
+                    reportError(LuaStatus.Error(TString("break outside loop"), res.stackTrace))
                 } else {
                     listOf(TNil)
                 }
@@ -61,10 +67,15 @@ class LuaInterpreter {
         return execute("<string>", code, beforeExecute)
     }
 
-    private fun reportError(error: LuaStatus.Error): Nothing {
+    private suspend fun reportError(error: LuaStatus.Error): Nothing {
         val stack = error.stackTrace
         val sb = StringBuilder()
-        sb.append(error.error)
+        val msg = when (val obj = error.error) {
+            is TNumber<*>, is TString -> obj.value.toString()
+            else -> "(error object is a ${obj.type.luaName} value)"
+        }
+        sb.append(msg)
+
         for (i in stack.indices) {
             val source = stack[i]
             sb.append("\n\tat ${source.function}")

@@ -33,7 +33,7 @@ abstract class LuaLexerBase protected constructor(input: CharStream) : Lexer(inp
             when (c) {
                 -1 -> {
                     done = true
-                    val listener = this.errorListenerDispatch
+                    val listener = errorListenerDispatch
                     listener.syntaxError(this, null, this.start_line, this.start_col, "unfinished long comment", null)
                 }
 

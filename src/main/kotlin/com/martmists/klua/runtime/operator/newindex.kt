@@ -1,11 +1,13 @@
 package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.type.TNil
 import com.martmists.klua.runtime.type.TTable
 import com.martmists.klua.runtime.type.TValue
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun TValue<*>.luaNewIndex(key: TValue<*>, value: TValue<*>) {
     if (this is TTable) {
         val existingValue = this[key]
@@ -35,5 +37,5 @@ suspend fun TValue<*>.luaNewIndex(key: TValue<*>, value: TValue<*>) {
         return_()
     }
 
-    error("attempt to index a ${type.luaName} value")
+    error_("attempt to index a ${type.luaName} value")
 }

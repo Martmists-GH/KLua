@@ -1,9 +1,11 @@
 package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.type.*
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun TValue<*>.luaMul(other: TValue<*>) {
     if (this is TNumber<*> && other is TNumber<*>) {
         if (this is TDouble || other is TDouble) {
@@ -31,8 +33,8 @@ suspend fun TValue<*>.luaMul(other: TValue<*>) {
     }
 
     if (this is TNumber<*>) {
-        error("attempt to perform arithmetic on a ${other.type.luaName} value")
+        error_("attempt to perform arithmetic on a ${other.type.luaName} value")
     } else {
-        error("attempt to perform arithmetic on a ${type.luaName} value")
+        error_("attempt to perform arithmetic on a ${type.luaName} value")
     }
 }

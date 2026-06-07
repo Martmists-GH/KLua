@@ -1,9 +1,11 @@
 package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.type.*
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun TValue<*>.luaEq(other: TValue<*>) {
     if (this === other) {
         return_(TBoolean.TRUE)

@@ -1,9 +1,11 @@
 package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.type.*
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun TValue<*>.luaUnm() {
     if (this is TLong) {
         return_(TLong(-this.value))
@@ -26,5 +28,5 @@ suspend fun TValue<*>.luaUnm() {
         return_(TLong(this.value.size.toLong()))
     }
 
-    error("attempt to perform arithmetic on a ${type.luaName} value")
+    error_("attempt to perform arithmetic on a ${type.luaName} value")
 }

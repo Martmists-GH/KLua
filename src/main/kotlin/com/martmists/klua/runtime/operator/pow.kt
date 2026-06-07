@@ -1,10 +1,12 @@
 package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.type.*
 import kotlin.math.pow
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun TValue<*>.luaPow(other: TValue<*>) {
     if (this is TNumber<*> && other is TNumber<*>) {
         val res = this.value.toDouble().pow(other.value.toDouble())
@@ -33,8 +35,8 @@ suspend fun TValue<*>.luaPow(other: TValue<*>) {
     }
 
     if (this is TNumber<*>) {
-        error("attempt to perform arithmetic on a ${other.type.luaName} value")
+        error_("attempt to perform arithmetic on a ${other.type.luaName} value")
     } else {
-        error("attempt to perform arithmetic on a ${type.luaName} value")
+        error_("attempt to perform arithmetic on a ${type.luaName} value")
     }
 }

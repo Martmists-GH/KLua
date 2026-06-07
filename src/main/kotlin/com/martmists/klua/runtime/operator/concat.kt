@@ -2,9 +2,11 @@ package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
 import com.martmists.klua.runtime.async.collectAsLuaScope
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.type.*
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun TValue<*>.luaConcat(other: TValue<*>) {
     if (this is TString) {
         if (other is TString) {
@@ -13,7 +15,7 @@ suspend fun TValue<*>.luaConcat(other: TValue<*>) {
             val asString = collectAsLuaScope {
                 other.luaToString()
             }.first()
-            return_(TString(this.value + asString.toString()))
+            return_(TString(this.value + asString.value.toString()))
         }
     } else if (other is TString) {
         if (this is TNumber<*>) {
@@ -50,8 +52,8 @@ suspend fun TValue<*>.luaConcat(other: TValue<*>) {
     }
 
     if (this is TString || this is TNumber<*>) {
-        error("attempt to concatenate a ${other.type.luaName} value")
+        error_("attempt to concatenate a ${other.type.luaName} value")
     } else {
-        error("attempt to concatenate a ${type.luaName} value")
+        error_("attempt to concatenate a ${type.luaName} value")
     }
 }

@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.9.21"
+    kotlin("jvm") version "2.4.0"
     antlr
 }
 
@@ -16,13 +16,13 @@ dependencies {
     antlr("org.antlr:antlr4:4.13.1")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
-    testImplementation(kotlin("test", "1.9.21"))
+    testImplementation(kotlin("test", "2.4.0"))
 }
 
 kotlin {
     compilerOptions {
         freeCompilerArgs = listOf(
-            "-Xcontext-receivers"
+            "-Xcontext-parameters"
         )
     }
 }

@@ -2,11 +2,15 @@ package com.martmists.klua.runtime.async
 
 import com.martmists.klua.meta.StackFrame
 import com.martmists.klua.runtime.LuaStatus
+import com.martmists.klua.runtime.Scope
 import com.martmists.klua.runtime.type.TValue
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.*
 import kotlin.coroutines.intrinsics.COROUTINE_SUSPENDED
 
 internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunication, Continuation<Unit> {
+    override lateinit var scope: Scope
+
     enum class State {
         READY, SUSPENDED, DEAD, FAILED
     }
@@ -53,7 +57,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     override suspend fun yield(values: List<TValue<*>>): List<TValue<*>> {
         nextValue = LuaStatus.Yield(values, listOf(StackFrame(null, null)))
         state = State.READY
-        return suspendCoroutine { c ->
+        return suspendCancellableCoroutine { c ->
             nextStep = c
             COROUTINE_SUSPENDED
         }
@@ -62,7 +66,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     override suspend fun return_(values: List<TValue<*>>): Nothing {
         nextValue = LuaStatus.Return(values)
         state = State.SUSPENDED
-        suspendCoroutine { c ->
+        suspendCancellableCoroutine { c ->
             nextStep = c
             COROUTINE_SUSPENDED
         }
@@ -72,7 +76,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     override suspend fun break_(): Nothing {
         nextValue = LuaStatus.StopIteration(true, listOf(StackFrame(null, null)))
         state = State.SUSPENDED
-        suspendCoroutine { c ->
+        suspendCancellableCoroutine { c ->
             nextStep = c
             COROUTINE_SUSPENDED
         }
@@ -82,7 +86,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     override suspend fun continue_(): Nothing {
         nextValue = LuaStatus.StopIteration(false, listOf(StackFrame(null, null)))
         state = State.SUSPENDED
-        suspendCoroutine { c ->
+        suspendCancellableCoroutine { c ->
             nextStep = c
             COROUTINE_SUSPENDED
         }
@@ -92,17 +96,17 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
     override suspend fun goto(label: String): Nothing {
         nextValue = LuaStatus.Goto(label, listOf(StackFrame(null, null)))
         state = State.SUSPENDED
-        suspendCoroutine { c ->
+        suspendCancellableCoroutine { c ->
             nextStep = c
             COROUTINE_SUSPENDED
         }
         throw IllegalStateException("Unreachable")
     }
 
-    override suspend fun error(message: String): Nothing {
+    override suspend fun error_(message: TValue<*>): Nothing {
         nextValue = LuaStatus.Error(message, listOf(StackFrame(null, null)))
         state = State.SUSPENDED
-        suspendCoroutine { c ->
+        suspendCancellableCoroutine { c ->
             nextStep = c
             COROUTINE_SUSPENDED
         }
@@ -115,7 +119,7 @@ internal class LuaCoroutineScopeImpl : LuaCoroutineScope, LuaCoroutineCommunicat
             is LuaStatus.Error, is LuaStatus.Return, is LuaStatus.StopIteration, is LuaStatus.Goto -> State.SUSPENDED
             is LuaStatus.Yield -> State.READY
         }
-        return suspendCoroutine { c ->
+        return suspendCancellableCoroutine { c ->
             nextStep = c
             COROUTINE_SUSPENDED
         }

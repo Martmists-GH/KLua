@@ -41,7 +41,7 @@ engine.execute("...") { env: TTable ->
         when (value) {
             0L -> return_(TString("Hello, world!"))  // Return a value
             1L -> yield(TString("Hello, world!"))  // Yield a value
-            else -> error("Invalid action")  // Emit an error
+            else -> error_("Invalid action")  // Emit an error
         }
     }
     

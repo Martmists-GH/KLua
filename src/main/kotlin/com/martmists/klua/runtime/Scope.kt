@@ -4,13 +4,19 @@ import com.martmists.klua.ast.node.*
 import com.martmists.klua.ext.asBool
 import com.martmists.klua.meta.StackFrame
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.break_
 import com.martmists.klua.runtime.async.collectAsLuaScope
+import com.martmists.klua.runtime.async.continue_
 import com.martmists.klua.runtime.async.createLuaScope
+import com.martmists.klua.runtime.async.emit
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.goto
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.operator.*
 import com.martmists.klua.runtime.type.*
 
 class Scope(
-    private val parent: Scope? = null,
+    val parent: Scope? = null,
     val env: TTable = TTable(),
     private val varargs: List<TValue<*>> = emptyList(),
 ) {
@@ -18,10 +24,10 @@ class Scope(
     private val root: Scope
         get() = parent?.root ?: this
 
-    context(LuaCoroutineScope)
+    context(_: LuaCoroutineScope)
     private suspend fun loadVar(name: String) = loadVar(TString(name))
 
-    context(LuaCoroutineScope)
+    context(_: LuaCoroutineScope)
     private suspend fun loadVar(name: TString) {
         if (name.value == "_ENV") {
             return_(root.env)
@@ -38,13 +44,13 @@ class Scope(
         }
     }
 
-    context(LuaCoroutineScope)
+    context(_: LuaCoroutineScope)
     private suspend fun ASTNode.get(): List<TValue<*>> {
         evaluate(this)
         return stack.take(stack.size).also { stack.clear() }.asReversed()
     }
 
-    context(LuaCoroutineScope)
+    context(_: LuaCoroutineScope)
     suspend fun evaluate(node: ASTNode) {
         when (node) {
             is Assign -> {
@@ -338,7 +344,7 @@ class Scope(
                         }
 
                         is LuaStatus.Goto -> {
-                            error("no visible label '${res.label}' for <goto>")
+                            error_("no visible label '${res.label}' for <goto>")
                         }
 
                         is LuaStatus.Error, is LuaStatus.StopIteration -> {
@@ -429,12 +435,53 @@ class Scope(
             }
 
             is NamedFunction -> {
-                evaluate(node.function)
-                stack.add((stack.removeLast() as TFunction).apply { name = node.name })
+                val elem = node.function.get().first()
+                (elem as TFunction).name = node.name
+                stack.add(elem)
             }
 
             NoOp -> {}
-            is NumericForLoop -> TODO("NumericForLoop")
+            is NumericForLoop -> {
+                val start = node.start.get().first()
+                val end = node.end.get().first()
+                val step = node.step.get().first()
+
+                var current = start
+                outer@while (collectAsLuaScope {
+                    current.luaLt(end)
+                }.first().asBool()) {
+                    val tab = TTable()
+                    tab[node.name] = current
+                    val nestedScope = Scope(this@Scope, tab)
+                    val scope = createLuaScope {
+                        nestedScope.evaluate(node.body)
+                    }
+
+                    var values = emptyList<TValue<*>>()
+                    inner@ while (true) {
+                        val res = scope.trySend(values)
+                        if (res is LuaStatus.StopIteration) {
+                            if (res.isBreak) {
+                                break@outer
+                            } else {
+                                continue@outer
+                            }
+                        }
+                        if (res != null) {
+                            values = emit(res)
+                            if (res !is LuaStatus.Yield) {
+                                break@outer
+                            }
+                        } else {
+                            break@inner
+                        }
+                    }
+
+                    current = collectAsLuaScope {
+                        current.luaAdd(step)
+                    }.first()
+                }
+            }
             is PushBoolean -> stack.add(TBoolean.of(node.value))
             is PushDouble -> stack.add(TDouble(node.value))
             is PushLong -> stack.add(TLong(node.value))
@@ -520,7 +567,7 @@ class Scope(
 
             is UnnamedFunction -> {
                 val args = if (node.isVararg) node.namedArgs.size else 0
-                val func = TFunction {
+                val func = TFunction(this@Scope) {
                     val newScope = Scope(this@Scope, TTable(), it.drop(args))
                     for ((i, arg) in node.namedArgs.withIndex()) {
                         newScope.env[TString(arg)] = if (i in it.indices) it[i] else TNil

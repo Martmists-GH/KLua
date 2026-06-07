@@ -1,13 +1,15 @@
 package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.type.*
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun TValue<*>.luaShl(other: TValue<*>) {
     if (this is TNumber<*> && other is TNumber<*>) {
         if (!this.isInteger() || !other.isInteger()) {
-            error("number has no integer representation")
+            error_("number has no integer representation")
         }
         return_(TLong(this.value.toLong() shl other.value.toInt()))
     }
@@ -29,5 +31,5 @@ suspend fun TValue<*>.luaShl(other: TValue<*>) {
         }
     }
 
-    error("attempt to perform bitwise operation on a ${type.luaName} value")
+    error_("attempt to perform bitwise operation on a ${type.luaName} value")
 }

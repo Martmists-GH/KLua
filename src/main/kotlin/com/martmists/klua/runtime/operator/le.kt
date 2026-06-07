@@ -1,9 +1,11 @@
 package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.type.*
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun TValue<*>.luaLe(other: TValue<*>) {
     if (this is TNumber<*> && other is TNumber<*>) {
         if (this is TDouble || other is TDouble) {
@@ -31,8 +33,8 @@ suspend fun TValue<*>.luaLe(other: TValue<*>) {
     }
 
     if (this.type == other.type) {
-        error("attempt to compare two ${this.type.luaName} values")
+        error_("attempt to compare two ${this.type.luaName} values")
     } else {
-        error("attempt to compare ${this.type.luaName} with ${other.type.luaName}")
+        error_("attempt to compare ${this.type.luaName} with ${other.type.luaName}")
     }
 }

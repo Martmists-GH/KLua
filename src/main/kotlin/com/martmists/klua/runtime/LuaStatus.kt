@@ -1,12 +1,16 @@
 package com.martmists.klua.runtime
 
 import com.martmists.klua.meta.StackFrame
+import com.martmists.klua.runtime.type.TString
 import com.martmists.klua.runtime.type.TValue
 
 sealed interface LuaStatus {
     val stackTrace: List<StackFrame>
 
-    data class Error(val error: String, override val stackTrace: List<StackFrame>) : LuaStatus
+    data class Error(val error: TValue<*>, override val stackTrace: List<StackFrame>) : LuaStatus {
+        @Deprecated("use TString", replaceWith = ReplaceWith("LuaStatus.Error(TString(error), stackTrace)"))
+        constructor(error: String, stackTrace: List<StackFrame>) : this(TString(error), stackTrace)
+    }
     data class Return(val values: List<TValue<*>>) : LuaStatus {
         override val stackTrace: List<StackFrame> = emptyList()
 
@@ -19,6 +23,6 @@ sealed interface LuaStatus {
 
     companion object {
         operator fun invoke(vararg values: TValue<*>) = Return(values.toList())
-        operator fun invoke(message: String) = Error(message, listOf(StackFrame(null, null)))
+        operator fun invoke(message: String) = Error(TString(message), listOf(StackFrame(null, null)))
     }
 }

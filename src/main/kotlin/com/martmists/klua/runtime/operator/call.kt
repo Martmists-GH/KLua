@@ -1,12 +1,13 @@
 package com.martmists.klua.runtime.operator
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
 import com.martmists.klua.runtime.type.TFunction
 import com.martmists.klua.runtime.type.TNil
 import com.martmists.klua.runtime.type.TTable
 import com.martmists.klua.runtime.type.TValue
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 tailrec suspend fun TValue<*>.luaCall(args: List<TValue<*>>) {
     if (this is TFunction) {
         invoke(args)
@@ -17,7 +18,7 @@ tailrec suspend fun TValue<*>.luaCall(args: List<TValue<*>>) {
     if (meta is TTable) {
         val callMeta = meta["__call"]
         if (callMeta === this) {
-            error("Detected infinite recursion in __call metamethod")
+            error_("Detected infinite recursion in __call metamethod")
         }
 
         if (callMeta !is TNil) {
@@ -26,5 +27,5 @@ tailrec suspend fun TValue<*>.luaCall(args: List<TValue<*>>) {
         }
     }
 
-    error("attempt to call a ${type.luaName} value")
+    error_("attempt to call a ${type.luaName} value")
 }

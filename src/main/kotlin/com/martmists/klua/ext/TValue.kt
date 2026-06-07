@@ -1,9 +1,12 @@
 package com.martmists.klua.ext
 
 import com.martmists.klua.runtime.async.LuaCoroutineScope
+import com.martmists.klua.runtime.async.error_
 import com.martmists.klua.runtime.type.LuaType
 import com.martmists.klua.runtime.type.TBoolean
+import com.martmists.klua.runtime.type.TLong
 import com.martmists.klua.runtime.type.TNil
+import com.martmists.klua.runtime.type.TNumber
 import com.martmists.klua.runtime.type.TValue
 
 fun TValue<*>.asBool() = when (this) {
@@ -27,10 +30,10 @@ fun formatTypes(types: Array<out LuaType>): String {
     return sb.toString()
 }
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun List<TValue<*>>.argument(index: Int, vararg types: LuaType): TValue<*> {
     if (index >= this.size && LuaType.NIL !in types) {
-        error("bad argument #${index + 1} (value expected)")
+        error_("bad argument #${index + 1} (value expected)")
     }
     val value = if (index in this.indices) this[index] else TNil
     if (types.isEmpty()) {
@@ -39,10 +42,10 @@ suspend fun List<TValue<*>>.argument(index: Int, vararg types: LuaType): TValue<
     if (types.any { it == value.type }) {
         return value
     }
-    error("bad argument #${index + 1} (${formatTypes(types)} expected, got ${value.type.luaName})")
+    error_("bad argument #${index + 1} (${formatTypes(types)} expected, got ${value.type.luaName})")
 }
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
 suspend fun List<TValue<*>>.argument(index: Int, vararg types: LuaType, default: () -> TValue<*>): TValue<*> {
     require(LuaType.NIL in types)
     val value = if (index in this.indices) this[index] else TNil
@@ -54,10 +57,34 @@ suspend fun List<TValue<*>>.argument(index: Int, vararg types: LuaType, default:
     return argument(index, *types)
 }
 
-context(LuaCoroutineScope)
+context(_: LuaCoroutineScope)
+suspend fun List<TValue<*>>.argumentInt(index: Int): TLong {
+    val arg = argument(index, LuaType.NUMBER) as TNumber<*>
+    if (arg !is TLong) {
+        if (!arg.isInteger()) {
+            error_("bad argument #$index (number has no integer representation)")
+        }
+        return TLong(arg.value.toLong())
+    }
+    return arg
+}
+
+context(_: LuaCoroutineScope)
+suspend fun List<TValue<*>>.argumentInt(index: Int, default: () -> TLong): TLong {
+    val arg = argument(index, LuaType.NUMBER, LuaType.NIL, default=default) as TNumber<*>
+    if (arg !is TLong) {
+        if (!arg.isInteger()) {
+            error_("bad argument #$index (number has no integer representation)")
+        }
+        return TLong(arg.value.toLong())
+    }
+    return arg
+}
+
+context(_: LuaCoroutineScope)
 suspend fun List<TValue<*>>.argument(index: Int): TValue<*> {
     if (index >= this.size) {
-        error("bad argument #${index + 1} (value expected)")
+        error_("bad argument #${index + 1} (value expected)")
     }
     return this[index]
 }

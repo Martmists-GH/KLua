@@ -5,6 +5,9 @@ import com.martmists.klua.runtime.LuaStatus
 import com.martmists.klua.runtime.async.LuaCoroutineCommunication
 import com.martmists.klua.runtime.async.LuaCoroutineScope
 import com.martmists.klua.runtime.async.createLuaScope
+import com.martmists.klua.runtime.async.emit
+import com.martmists.klua.runtime.async.error_
+import com.martmists.klua.runtime.async.return_
 import com.martmists.klua.runtime.operator.luaCall
 
 class TThread(private val func: TValue<*>) : TValue<Unit>() {
@@ -19,7 +22,7 @@ class TThread(private val func: TValue<*>) : TValue<Unit>() {
     private var communication: LuaCoroutineCommunication? = null
     var state = State.SUSPENDED
 
-    context(LuaCoroutineScope)
+    context(_: LuaCoroutineScope)
     suspend fun resume(args: List<TValue<*>>) {
         if (state == State.DEAD) {
             return_(TBoolean.FALSE, TString("cannot resume dead coroutine"))
@@ -37,10 +40,10 @@ class TThread(private val func: TValue<*>) : TValue<Unit>() {
         }
         state = if (res is LuaStatus.Yield) State.SUSPENDED else State.DEAD
         when (res) {
-            is LuaStatus.Error -> return_(TBoolean.FALSE, TString(res.error))
+            is LuaStatus.Error -> return_(TBoolean.FALSE, res.error)
             is LuaStatus.Return -> return_(listOf(TBoolean.TRUE) + res.values)
             is LuaStatus.StopIteration -> emit(res)
-            is LuaStatus.Goto -> error("No visible label '${res.label}' for <goto>")
+            is LuaStatus.Goto -> error_("No visible label '${res.label}' for <goto>")
             is LuaStatus.Yield -> return_(listOf(TBoolean.TRUE) + res.values)
         }
     }

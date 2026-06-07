@@ -2,7 +2,7 @@ package com.martmists.klua.runtime.type
 
 import com.martmists.klua.runtime.LuaException
 
-abstract class TNumber<T : Number>(override val value: T) : TValue<Number>() {
+sealed class TNumber<T : Number>(override val value: T) : TValue<Number>() {
     override val type = LuaType.NUMBER
 
     fun asDouble(): Double {
