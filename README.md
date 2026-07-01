@@ -1,7 +1,6 @@
 # KLua
 
-KLua is a Lua interpreter written in Kotlin, based on Kotlinx.coroutines.
-It currently only supports JVM, but should be easy to port once context receivers become available on other platforms.
+KLua is a Lua interpreter written in Kotlin, based on Kotlinx.coroutines. Works on Kotlin Multiplatform!
 
 ## Features
 
