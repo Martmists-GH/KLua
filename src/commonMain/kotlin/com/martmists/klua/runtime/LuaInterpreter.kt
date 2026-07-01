@@ -21,6 +21,9 @@ class LuaInterpreter {
         root.env.insertBasic()
     }
 
+    val globalEnv: TTable
+        get() = root.env
+
     suspend fun execute(filename: String, source: String, beforeExecute: (env: TTable) -> Unit = {}): List<TValue<*>> {
         val stream = CharStreams.fromString(source)
         val lexer = LuaLexer(stream)
